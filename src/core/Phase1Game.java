@@ -14,7 +14,7 @@ public class Phase1Game {
     private Deck deck;
 
     private int tricksWon;
-    pivate int tricksLost;
+    private int tricksLost;
 
     public Phase1Game(GameState gameState) {
         this.gameState = gameState;
@@ -32,7 +32,7 @@ public class Phase1Game {
 
     public TrickResult playCard(Card playerCard){
         Card dealerCard = dealer.chooseCard(playerCard, player.getHand());
-        boolean playerWin = Rules.isPlayerWin(playerCard, dealerCard);
+        boolean playerWin = Rules.isPlayerTrickWinner(playerCard, dealerCard);
         if (playerWin) {
             tricksWon++;
             gameState.addPhase1score(Rules.scoreCard(playerCard) + Rules.scoreCard(dealerCard));

@@ -42,7 +42,7 @@ public class GameManager {
         debtPayment();
     }
 
-    private void debtPayment();{
+    private void debtPayment(){
         gameState.applyDebtInterest();
         ui.showDebtPanel(ammount -> {
             gameState.payDebt(ammount);

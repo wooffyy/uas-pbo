@@ -23,7 +23,7 @@ public class Phase2Game {
             throw new Exception("Not enough money");
         }
 
-        GameState.addInventory(item);
+        gameState.addInventory(item);
         gameState.setMoney(gameState.getMoney() - item.getPrice());
         return true;
     }
@@ -37,7 +37,7 @@ public class Phase2Game {
             throw new Exception("Not enough money");
         }
 
-        int dealerBid = state.getCurrentDealer().bid(biddingItem, state.getRound());
+        int dealerBid = gameState.getCurrentDealer().bid(biddingItem, gameState.getRound());
 
         if (playerBid == dealerBid){
             return BiddingResult.tie(dealerBid);
