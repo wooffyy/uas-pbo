@@ -15,6 +15,7 @@ public class Phase1Game {
 
     private int tricksWon;
     private int tricksLost;
+    private int totalPoints;
 
     public Phase1Game(GameState gameState) {
         this.gameState = gameState;
@@ -24,9 +25,11 @@ public class Phase1Game {
         deck = new Deck();
         deck.shuffle(gameState.getSeed());
 
+        this.tricksWon = 0;
+        this.totalPoints = 0;
+
         player = new Player();
         dealer = gameState.getCurrentDealer();
-
         deck.deal(player.getHand(), dealer.getHand());
     }
 
@@ -35,7 +38,8 @@ public class Phase1Game {
         boolean playerWin = Rules.isPlayerTrickWinner(playerCard, dealerCard);
         if (playerWin) {
             tricksWon++;
-            gameState.addPhase1score(Rules.scoreCard(playerCard) + Rules.scoreCard(dealerCard));
+            int points = Rules.scoreCard(playerCard) + Rules.scoreCard(dealerCard);
+            totalPoints += points;
         } else {
             tricksLost++;
         }
@@ -45,5 +49,9 @@ public class Phase1Game {
 
     public boolean isWin() {
         return tricksWon > tricksLost;
+    }
+
+    public int getReward() {
+        return totalPoints;
     }
 }

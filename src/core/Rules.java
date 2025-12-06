@@ -1,7 +1,7 @@
 package core;
 
 import model.card.Card;
-import model.suit.Suit;
+import model.card.Suit;
 
 // Static final config → Encapsulation numeric rule
 public final class Rules {

@@ -1,11 +1,9 @@
 package model.state;
 
-import model.card.Card;
-import model.card.Deck;
-import model.entity.Dealer;
-import model.entity.Player;
 import core.Rules;
 import model.card.SpecialCard;
+import model.entity.Dealer;
+import model.entity.Player;
 
 // Progress game untuk load/save
 public class GameState {
@@ -23,7 +21,7 @@ public class GameState {
     private PlayerInventory inventory;
 
     private boolean gameOver;
-    // private boolean playerLeads;
+    private boolean playerLeads;
 
     private long seed;
 
@@ -81,10 +79,6 @@ public class GameState {
         this.round += 1;
     }
 
-    public void addPhase1score(int score) {
-        this.scorePhase1 += score;
-    }
-
     public double getSeed() {
         return this.seed;
     }
@@ -126,4 +120,3 @@ public class GameState {
         this.playerMoney += amount;
     }
 }
-
