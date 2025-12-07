@@ -7,11 +7,11 @@ import model.card.Suit;
 public final class Rules {
     private Rules() {}
 
-    public static boolean isPlayerTrickWinner(Card player, Card dealer) {
-        Suit leadSuit = dealer.getSuit();
+    public static boolean isPlayerTrickWinner(Card playerCard, Card dealerCard) {
+        Suit leadSuit = dealerCard.getSuit();
 
-        boolean playerFollowSuit = player.getSuit() == leadSuit;
-        boolean higherValue = player.getValue() > dealer.getValue();
+        boolean playerFollowSuit = playerCard.getSuit() == leadSuit;
+        boolean higherValue = playerCard.getValue() > dealerCard.getValue();
 
         if (!playerFollowSuit) {
             return false;  // auto lose
