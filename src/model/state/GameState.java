@@ -79,7 +79,7 @@ public class GameState {
         this.round += 1;
     }
 
-    public double getSeed() {
+    public long getSeed() {
         return this.seed;
     }
 
