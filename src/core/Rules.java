@@ -20,7 +20,6 @@ public final class Rules {
         return higherValue;
     }
 
-
     public static int scoreCard(Card card){
         return switch (card.getRank()){
             case ACE -> 1;
