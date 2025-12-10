@@ -25,6 +25,7 @@ public class GameState {
 
     private long seed;
 
+    public GameState() {} 
     public GameState(Player player, Dealer dealer) {
         this.player = player;
         this.currentDealer = dealer;
@@ -66,6 +67,10 @@ public class GameState {
         return true;
     }
 
+    public int getPlayerHealth() { return this.playerHealth; }
+    
+    public int setPlayerHealth(int health) { this.playerHealth = health; return this.playerHealth; }
+
     public int decreaseLife() {
         this.playerHealth -= 1;
         return this.playerHealth;
@@ -82,6 +87,8 @@ public class GameState {
     public long getSeed() {
         return this.seed;
     }
+
+    public long setSeed(long seed) { this.seed = seed; return this.seed; }
 
     public Dealer getCurrentDealer() {
         return this.currentDealer;
@@ -104,6 +111,8 @@ public class GameState {
         return this.round;
     }
 
+    public int setRound(int round) { this.round = round; return this.round; }
+
     public int getMoney() {
         return this.playerMoney;
     }
@@ -116,7 +125,20 @@ public class GameState {
         return this.inventory;
     }
 
+    public PlayerInventory setInventory(PlayerInventory inventory) {
+        this.inventory = inventory;
+        return this.inventory;
+    }
+
     public void setMoney(int amount) {
         this.playerMoney += amount;
     }
+
+    public int getDebt() { return this.debt; }
+
+    public int setDebt(int debt) { this.debt = debt; return this.debt; }
+
+    public double getInterestRate() { return this.interestRate; }
+    
+    public double setInterestRate(double interestRate) { this.interestRate = interestRate; return this.interestRate; }
 }
