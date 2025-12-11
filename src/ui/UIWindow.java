@@ -18,7 +18,7 @@ public class UIWindow extends JFrame {
 
         // Memuat gambar dari direktori yang sama dengan class.
         // Metode getResource() adalah cara yang aman untuk memuat resource di Java.
-        Image icon = Toolkit.getDefaultToolkit().getImage(getClass().getResource("logoEscape.png"));
+        Image icon = Toolkit.getDefaultToolkit().getImage(getClass().getResource("component/logoEscape.png"));
         // Mengatur ikon untuk JFrame
         setIconImage(icon);
 
