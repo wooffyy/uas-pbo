@@ -7,6 +7,7 @@ import java.awt.*;
 public class UIWindow extends JFrame {
 
     public static final String MENU_VIEW = "MenuView";
+    public static final String PHASE1_VIEW = "Phase1View";
 
     private final CardLayout cardLayout;
     private final JPanel mainPanel;
@@ -15,6 +16,7 @@ public class UIWindow extends JFrame {
         setTitle("Escape from Pinjol - Life and Death Edition");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800);
+
 
         // Memuat gambar dari direktori yang sama dengan class.
         // Metode getResource() adalah cara yang aman untuk memuat resource di Java.
@@ -29,8 +31,11 @@ public class UIWindow extends JFrame {
 
         // Inisialisasi semua panel
         MainMenuPanel menuPanel = new MainMenuPanel(this);
+        Phase1Panel phase1Panel = new Phase1Panel(this);
 
         mainPanel.add(menuPanel, MENU_VIEW);
+        mainPanel.add(phase1Panel, PHASE1_VIEW);
+
 
 
         add(mainPanel);
