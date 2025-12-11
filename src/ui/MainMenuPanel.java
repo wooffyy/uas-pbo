@@ -2,7 +2,7 @@ package ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener; // Import untuk ActionListener
+
 
 // Panel Menu awal
 public class MainMenuPanel extends JPanel {
@@ -22,7 +22,7 @@ public class MainMenuPanel extends JPanel {
 
 
         // Memuat gambar dari direktori yang sama dengan class MainMenuPanel (package ui)
-        backgroundImage = Toolkit.getDefaultToolkit().getImage(getClass().getResource("bgUI.png"));
+        backgroundImage = Toolkit.getDefaultToolkit().getImage(getClass().getResource("component/bgUI2.png"));
         super.setBackground(Color.BLACK);
 
 
@@ -49,6 +49,8 @@ public class MainMenuPanel extends JPanel {
         startButton.setForeground(BUTTON_FG);
         startButton.setFont(new Font("Monospaced", Font.BOLD, 20));
         startButton.setBorder(BorderFactory.createLineBorder(TITLE_COLOR, 2));
+
+        startButton.addActionListener(e -> parentFrame.switchView(UIWindow.PHASE1_VIEW));
 
 
         // Tombol Collection
