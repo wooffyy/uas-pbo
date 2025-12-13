@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
 
 // Halaman Koleksi Kartu Spesial
 public class CardCollectionPanel extends JPanel {
