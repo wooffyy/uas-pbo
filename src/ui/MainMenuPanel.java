@@ -60,6 +60,7 @@ public class MainMenuPanel extends JPanel {
         collectionButton.setForeground(TITLE_COLOR);
         collectionButton.setFont(new Font("Monospaced", Font.PLAIN, 18));
         collectionButton.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
+        collectionButton.addActionListener(e -> parentFrame.switchView(UIWindow.CARD_COLLECTION_VIEW)); // Hubungkan ke view baru
 
         // Menambahkan fungsionalitas tombol Collection
 
