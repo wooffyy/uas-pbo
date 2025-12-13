@@ -8,6 +8,8 @@ public class UIWindow extends JFrame {
 
     public static final String MENU_VIEW = "MenuView";
     public static final String PHASE1_VIEW = "Phase1View";
+    public static final String CARD_COLLECTION_VIEW = "CardCollectionView";
+
 
     private final CardLayout cardLayout;
     private final JPanel mainPanel;
@@ -35,10 +37,12 @@ public class UIWindow extends JFrame {
 
         mainPanel.add(menuPanel, MENU_VIEW);
         mainPanel.add(phase1Panel, PHASE1_VIEW);
+        CardCollectionPanel collectionPanel = new CardCollectionPanel(this);
 
 
 
         add(mainPanel);
+        mainPanel.add(collectionPanel, CARD_COLLECTION_VIEW);
 
         cardLayout.show(mainPanel, MENU_VIEW);
 
