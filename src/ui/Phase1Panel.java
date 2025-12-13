@@ -9,6 +9,7 @@ public class Phase1Panel extends JPanel {
 
     private static final Color INFO_BG = new Color(30, 30, 30);
     private static final Color BOARD_BG = new Color(30, 60, 30);
+    private static final Color TEXT_COLOR = Color.WHITE;
     private static final Color ACCENT_COLOR = new Color(255, 50, 50);
     private static final Color MONEY_COLOR = new Color(255, 200, 0);
 
