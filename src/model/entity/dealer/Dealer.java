@@ -1,4 +1,4 @@
-package model.entity;
+package model.entity.dealer;
 
 import java.util.ArrayList;
 import java.util.List;

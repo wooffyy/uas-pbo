@@ -2,7 +2,7 @@ package model.state;
 
 import core.Rules;
 import model.card.SpecialCard;
-import model.entity.Dealer;
+import model.entity.dealer.Dealer;
 import model.entity.Player;
 
 // Progress game untuk load/save
