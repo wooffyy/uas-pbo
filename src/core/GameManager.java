@@ -2,15 +2,13 @@ package core;
 
 import java.util.List;
 import java.util.Random;
-
+import model.card.EffectTrigger;
 import model.card.SpecialCard;
-import model.state.GameState;
 import model.entity.dealer.Dealer;
-import model.entity.dealer.BossDealer;
-import model.entity.dealer.TacticianBoss;
 import model.entity.dealer.EconomistBoss;
 import model.entity.dealer.FinalBossDealer;
-
+import model.entity.dealer.TacticianBoss;
+import model.state.GameState;
 import ui.UIWindow;
 
 /**
@@ -123,7 +121,7 @@ public class GameManager {
         setDealerForCurrentStage();
 
         phase1.start();
-        startPhase1();
+        startPhase1();;
     }
 
     /* =====================================================

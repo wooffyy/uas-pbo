@@ -1,8 +1,5 @@
 package ui;
 
-import core.GameManager;
-import model.state.GameState;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,7 +13,6 @@ public class UIWindow extends JFrame {
 
     private final CardLayout cardLayout;
     private final JPanel mainPanel;
-    private final GameManager gameManager;
 
     public UIWindow() {
         setTitle("Escape from Pinjol - Life and Death Edition");
@@ -27,14 +23,11 @@ public class UIWindow extends JFrame {
                 .getImage(getClass().getResource("component/logoEscape.png"));
         setIconImage(icon);
 
-        GameState gameState = new GameState();
-        this.gameManager = new GameManager(gameState, this, util.SpecialCardDB.getAllCards());
-
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
         // ================= INIT ALL VIEWS =================
-        MainMenuPanel menuPanel = new MainMenuPanel(this, gameManager);
+        MainMenuPanel menuPanel = new MainMenuPanel(this);
         Phase1Panel phase1Panel = new Phase1Panel(this);
         Phase2ShopPanel phase2Panel = new Phase2ShopPanel(this);
         BiddingPanel biddingPanel = new BiddingPanel(this);
@@ -59,9 +52,5 @@ public class UIWindow extends JFrame {
     /** Pindah antar view */
     public void switchView(String viewName) {
         cardLayout.show(mainPanel, viewName);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(UIWindow::new);
     }
 }

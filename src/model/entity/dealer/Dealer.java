@@ -12,6 +12,7 @@ abstract public class Dealer {
     private int tricksWon;
     private String name;
     private Random rng;
+    private int rankModifier = 0;
     
     public Dealer(String name, Random rng){
         this.name = name;
@@ -23,6 +24,14 @@ abstract public class Dealer {
     public abstract int bid(SpecialCard biddingItem, int round);
     public abstract Card chooseCard(Card playerCard, List<Card> playerHand);
 
+    public void applyRankModifier(int rankModifier) {
+        this.rankModifier = rankModifier;
+    }
+
+    public int getRankModifier() {
+        return this.rankModifier;
+    }
+    
     public void resetHand(List<Card> newHand){
         this.hand = newHand;
     }

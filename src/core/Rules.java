@@ -8,13 +8,19 @@ public final class Rules {
     private Rules() {}
 
     public static boolean isPlayerTrickWinner(Card playerCard, Card dealerCard) {
+        // By default, the suit rule is not ignored.
+        return isPlayerTrickWinner(playerCard, dealerCard, false);
+    }
+
+    public static boolean isPlayerTrickWinner(Card playerCard, Card dealerCard, boolean ignoreSuitRule) {
         Suit leadSuit = dealerCard.getSuit();
 
         boolean playerFollowSuit = playerCard.getSuit() == leadSuit;
         boolean higherValue = playerCard.getValue() > dealerCard.getValue();
 
-        if (!playerFollowSuit) {
-            return false;  // auto lose
+        // The player automatically loses if they don't follow suit, UNLESS the rule is ignored
+        if (!playerFollowSuit && !ignoreSuitRule) {
+            return false;
         }
 
         return higherValue;

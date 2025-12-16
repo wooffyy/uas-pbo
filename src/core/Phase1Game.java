@@ -50,7 +50,7 @@ public class Phase1Game {
         deck.deal(player.getHand(), dealer.getHand());
 
         // Apply BEFORE_STAGE effects
-        EffectContext stageCtx = new EffectContext(gameState, gameState.getRound(), totalPoints);
+        EffectContext stageCtx = new EffectContext(gameState, gameState.getRound(), totalPoints, capturedCards);
         gameState.getInventory().applyEffects(stageCtx, EffectTrigger.BEFORE_STAGE);
     }
 

@@ -95,6 +95,10 @@ public class GameState {
         this.round++;
     }
 
+    public void setRound(int round) {
+        this.round = round;
+    }
+
     public int getScorePhase1() {
         return scorePhase1;
     }
@@ -114,6 +118,10 @@ public class GameState {
         if (this.playerHealth <= 0) {
             this.gameOver = true;
         }
+    }
+
+    public void setPlayerHealth(int playerHealth) {
+        this.playerHealth = playerHealth;
     }
 
     public boolean isDead() {
@@ -177,6 +185,10 @@ public class GameState {
         return inventory;
     }
 
+    public void setInventory(PlayerInventory inventory) {
+        this.inventory = inventory;
+    }
+
     public void addInventory(SpecialCard card) {
         inventory.add(card);
     }
@@ -187,9 +199,17 @@ public class GameState {
         return gameOver;
     }
 
+    public void setPlayerLeads(boolean playerLeads) {
+        this.playerLeads = playerLeads;
+    }
+
     /* ================= RNG ================= */
 
     public long getSeed() {
         return seed;
+    }
+
+    public void setSeed(long seed) {
+        this.seed = seed;
     }
 }

@@ -5,6 +5,7 @@ import model.state.GameState;
 import model.state.PlayerInventory;
 import model.card.SpecialCard;
 import model.card.EffectType;
+import model.card.EffectTrigger;
 import model.card.Rarity;
 
 import java.sql.*;
@@ -123,7 +124,7 @@ public class DatabaseManager {
         PlayerInventory inventory = new PlayerInventory();
 
         String sqlInventory = """
-            SELECT s.id, s.name, s.effect_type, s.price, s.rarity, s.description
+            SELECT s.id, s.name, s.effect_type, s.effect_trigger, s.price, s.rarity, s.description
             FROM inventory i
             JOIN special_card_data s ON i.special_card_id = s.id
         """;
@@ -134,6 +135,7 @@ public class DatabaseManager {
                     rs.getInt("id"),
                     rs.getString("name"),
                     EffectType.valueOf(rs.getString("effect_type")),
+                    EffectTrigger.valueOf(rs.getString("effect_trigger")),
                     rs.getInt("price"),
                     Rarity.valueOf(rs.getString("rarity")),
                     rs.getString("description")
