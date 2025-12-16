@@ -1,5 +1,7 @@
 package ui;
 
+import core.GameManager;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -17,7 +19,7 @@ public class MainMenuPanel extends JPanel {
     // Panel di tengah harus transparan agar gambar latar terlihat
     private final JPanel centerPanel;
 
-    public MainMenuPanel(UIWindow parentFrame) {
+    public MainMenuPanel(UIWindow parentFrame, GameManager gameManager) {
         setLayout(new BorderLayout());
 
 
@@ -50,7 +52,7 @@ public class MainMenuPanel extends JPanel {
         startButton.setFont(new Font("Monospaced", Font.BOLD, 20));
         startButton.setBorder(BorderFactory.createLineBorder(TITLE_COLOR, 2));
 
-        startButton.addActionListener(e -> parentFrame.switchView(UIWindow.PHASE1_VIEW));
+        startButton.addActionListener(e -> gameManager.startRun());
 
 
         // Tombol Collection

@@ -3,12 +3,14 @@ package core;
 import model.state.GameState;
 import model.card.Card;
 import model.card.Deck;
-import model.card.Suit;
+import model.card.EffectTrigger;
 import model.entity.Player;
 import model.entity.dealer.Dealer;
 import model.entity.dealer.BossDealer;
 
-// Logic Trick-taking (German Whist-style)
+import java.util.ArrayList;
+import java.util.List;
+
 public class Phase1Game {
 
     private final GameState gameState;
@@ -18,139 +20,142 @@ public class Phase1Game {
 
     private int tricksWon;
     private int tricksLost;
+    private int winStreak;
     private int totalPoints;
     private int trickCount;
+    private final List<Card> capturedCards = new ArrayList<>();
 
     public Phase1Game(GameState gameState) {
         this.gameState = gameState;
     }
 
-    /* =====================================================
-     * START PHASE 1
-     * ===================================================== */
     public void start() {
         deck = new Deck();
         deck.shuffle(gameState.getSeed());
 
         this.tricksWon = 0;
         this.tricksLost = 0;
+        this.winStreak = 0;
         this.totalPoints = 0;
         this.trickCount = 0;
+        this.capturedCards.clear();
 
         player = new Player();
         dealer = gameState.getCurrentDealer();
 
-        // 🔴 RESET STATE BOSS (WAJIB)
         if (dealer instanceof BossDealer boss) {
             boss.resetPhase1State();
         }
 
         deck.deal(player.getHand(), dealer.getHand());
+
+        // Apply BEFORE_STAGE effects
+        EffectContext stageCtx = new EffectContext(gameState, gameState.getRound(), totalPoints);
+        gameState.getInventory().applyEffects(stageCtx, EffectTrigger.BEFORE_STAGE);
     }
 
-    /* =====================================================
-     * MAIN GAME LOOP — MAIN 1 TRICK
-     * ===================================================== */
     public TrickResult playCard(Card playerCard) throws GameException {
-
-        // 🔴 FASE 3 — FORCED COMMITMENT VALIDATION
         if (isForcedHighestCardViolation(playerCard)) {
-            throw new GameException(
-                    "Forced Commitment aktif: Anda harus memainkan kartu tertinggi yang tersedia!"
-            );
+            throw new GameException("Forced Commitment aktif: Anda harus memainkan kartu tertinggi yang tersedia!");
         }
 
         trickCount++;
 
-        // 🔴 NOTIFY BOSS TRICK START
         if (dealer instanceof BossDealer boss) {
             boss.onTrickStart(trickCount);
         }
 
-        // Dealer memilih kartu
+        // BEFORE_ROUND effects
+        EffectContext beforeRoundCtx = new EffectContext(gameState, playerCard, null, false, trickCount, gameState.getRound(), totalPoints, winStreak);
+        TrickModifier beforeRoundModifier = gameState.getInventory().applyEffects(beforeRoundCtx, EffectTrigger.BEFORE_ROUND);
+        playerCard.modifyRank(beforeRoundModifier.getPlayerRankBoost());
+
         Card dealerCard = dealer.chooseCard(playerCard, player.getHand());
 
-        // 🔴 SIMPAN SUIT BOSS (FINAL BOSS)
         if (dealer instanceof BossDealer boss) {
             boss.onBossPlayCard(dealerCard);
         }
 
-        // ===== HITUNG NILAI KARTU =====
+        // ON_ROUND effects
+        EffectContext onRoundCtx = new EffectContext(gameState, playerCard, dealerCard, false, trickCount, gameState.getRound(), totalPoints, winStreak);
+        TrickModifier onRoundModifier = gameState.getInventory().applyEffects(onRoundCtx, EffectTrigger.ON_ROUND);
+        playerCard.modifyRank(onRoundModifier.getPlayerRankBoost());
+
         int playerValue = Rules.scoreCard(playerCard);
         int dealerValue = Rules.scoreCard(dealerCard);
 
-        // 🔴 STAGE 3 — ECONOMIST (Value Drain)
         if (dealer instanceof BossDealer boss) {
             playerValue = boss.modifyPlayerCardValue(playerValue);
         }
 
-        // ===== RULES DEFAULT =====
-        boolean playerWin = Rules.isPlayerTrickWinner(playerCard, dealerCard);
-
-        // 🔴 STAGE 4 — FINAL BOSS (Dominance)
-        if (dealer instanceof BossDealer boss) {
-            playerWin = boss.overrideTrickWinner(
-                    playerCard,
-                    dealerCard,
-                    playerWin,
-                    playerValue,
-                    dealerValue
-            );
+        boolean playerWin = Rules.isPlayerTrickWinner(playerCard, dealerCard, onRoundModifier.isIgnoreSuitRule());
+        if (onRoundModifier.isForceWin()) {
+            playerWin = true;
         }
 
-        // ===== UPDATE SCORE =====
+        if (dealer instanceof BossDealer boss) {
+            playerWin = boss.overrideTrickWinner(playerCard, dealerCard, playerWin, playerValue, dealerValue);
+        }
+        
+        boolean retrigger = onRoundModifier.isRetrigger() && playerWin;
+        if (retrigger) {
+             System.out.println("Retrigger activated!");
+        }
+
         if (playerWin) {
             tricksWon++;
-            totalPoints += (playerValue + dealerValue);
+            winStreak++;
+            capturedCards.add(playerCard);
+            capturedCards.add(dealerCard);
+            int trickPoints = playerValue + dealerValue;
+
+            // AFTER_ROUND effects
+            EffectContext afterRoundCtx = new EffectContext(gameState, playerCard, dealerCard, true, trickCount, gameState.getRound(), totalPoints, winStreak);
+            TrickModifier afterRoundModifier = gameState.getInventory().applyEffects(afterRoundCtx, EffectTrigger.AFTER_ROUND);
+            trickPoints *= afterRoundModifier.getPointMultiplier();
+            trickPoints += afterRoundModifier.getFlatPointsBonus();
+            totalPoints += trickPoints;
         } else {
             tricksLost++;
+            winStreak = 0;
         }
 
-        // (opsional tapi logis)
         player.getHand().remove(playerCard);
         dealer.removeCardFromHand(dealerCard);
 
-        return new TrickResult(playerWin, playerCard, dealerCard);
+        gameState.getInventory().tickCooldowns();
+
+        return new TrickResult(playerWin, playerCard, dealerCard, retrigger);
     }
 
-    /* =====================================================
-     * FASE 3 — VALIDASI FORCED COMMITMENT
-     * ===================================================== */
     private boolean isForcedHighestCardViolation(Card chosenCard) {
-
-        // Tidak ada boss
         if (!(dealer instanceof BossDealer boss)) return false;
-
-        // Skill tidak aktif
         if (!boss.forceHighestCard()) return false;
 
-        // Cari kartu tertinggi dengan suit yang sama
         Card highestSameSuit = null;
-
         for (Card c : player.getHand()) {
             if (c.getSuit() != chosenCard.getSuit()) continue;
-
-            if (highestSameSuit == null ||
-                    Rules.scoreCard(c) > Rules.scoreCard(highestSameSuit)) {
+            if (highestSameSuit == null || Rules.scoreCard(c) > Rules.scoreCard(highestSameSuit)) {
                 highestSameSuit = c;
             }
         }
 
-        // Tidak punya kartu follow suit → bebas
         if (highestSameSuit == null) return false;
-
-        // Melanggar jika bukan kartu tertinggi
         return Rules.scoreCard(chosenCard) < Rules.scoreCard(highestSameSuit);
     }
 
-    /* =====================================================
-     * RESULT & REWARD
-     * ===================================================== */
     public boolean isWin() {
         return tricksWon > tricksLost;
     }
 
     public int getReward() {
+        // The final points for the stage are now calculated.
+        // We set it in the game state so that AFTER_STAGE effects can modify it.
+        gameState.setScorePhase1(totalPoints);
         return totalPoints;
+    }
+
+    public List<Card> getCapturedCards() {
+        return capturedCards;
     }
 }

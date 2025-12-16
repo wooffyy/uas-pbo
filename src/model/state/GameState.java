@@ -95,6 +95,14 @@ public class GameState {
         this.round++;
     }
 
+    public int getScorePhase1() {
+        return scorePhase1;
+    }
+
+    public void setScorePhase1(int score) {
+        this.scorePhase1 = score;
+    }
+
     /* ================= PLAYER HEALTH ================= */
 
     public int getPlayerHealth() {
@@ -150,6 +158,17 @@ public class GameState {
         if (debt < 0) debt = 0;
 
         return true;
+    }
+
+    public void setDebt(int debt) {
+        this.debt = debt;
+        if (this.debt < 0) {
+            this.debt = 0;
+        }
+    }
+
+    public void setInterestRate(double interestRate) {
+        this.interestRate = interestRate;
     }
 
     /* ================= INVENTORY ================= */

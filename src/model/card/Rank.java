@@ -13,4 +13,8 @@ public enum Rank {
     public int getValue() {
         return value;
     }
+
+    public boolean isFaceCard() {
+        return this == JACK || this == QUEEN || this == KING;
+    }
 }

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+
+import model.card.Rarity;
 import model.card.SpecialCard;
 
 // Logic Shop di phase 2
@@ -22,10 +25,10 @@ public class Shop {
 
         List<SpecialCard> items = new ArrayList<>();
 
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count && i < itemPool.size(); i++) {
             SpecialCard base = itemPool.get(random.nextInt(itemPool.size()));
-            SpecialCard copy = base.clone();
-            copy.setPrice(scalePrice(base.getBasePrice(), round));
+            SpecialCard copy = new SpecialCard(base);
+            copy.setPrice(scalePrice(base.getPrice(), round));
             items.add(copy);
         }
 
@@ -35,15 +38,18 @@ public class Shop {
     public SpecialCard rollBiddingItem(int round) {
         List<SpecialCard> rares = itemPool.stream()
             .filter(c -> c.getRarity() == Rarity.RARE)
-            .toList();
+            .collect(Collectors.toList());
+
+        if (rares.isEmpty()) {
+            return null; // or a random common card
+        }
 
         SpecialCard base = rares.get(random.nextInt(rares.size()));
-        SpecialCard copy = base.clone();
-        copy.setPrice(scalePrice(base.getBasePrice(), round));
+        SpecialCard copy = new SpecialCard(base);
+        copy.setPrice(scalePrice(base.getPrice(), round));
         return copy;
     }
 
-    // belum tentu dipakai
     private int scalePrice(int basePrice, int round) {
         return (int)(basePrice * (1 + 0.1 * (round - 1)));
     }

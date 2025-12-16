@@ -1,6 +1,23 @@
 package model.card;
 
-// Enum untuk jenis efek kartu (buff/nerf/delay/buff economy)
-public class EffectType {
-    
+public enum EffectType {
+    RANK_RISER,
+    HEART_HARVESTER,
+    SPADE_SNEAK,
+    CLUB_CRUSHER,
+    DIAMOND_DEALER,
+    LOW_LIFTER,
+    TEN_TAKER,
+    SUIT_SWAPPER,
+    HIGH_HIJACK,
+    TRICK_THIEF,
+    VOID_VIPER,
+    POINT_PARASITE,
+    LEAD_LEECH,
+    RANK_RAMPAGE,
+    CASCADE_CAPTURE,
+    TRUMP_TYRANT,
+    DEALER_DOOM,
+    INFINITE_TRICKS
 }
+

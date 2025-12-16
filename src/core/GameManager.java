@@ -38,7 +38,7 @@ public class GameManager {
      * ===================================================== */
 
     public void startGame() {
-        ui.showMainMenu();
+        ui.switchView(UIWindow.MENU_VIEW);
     }
 
     /**
@@ -57,15 +57,27 @@ public class GameManager {
     }
 
     private void startPhase1() {
-        ui.showPhase1Panel(phase1);
+        ui.switchView(UIWindow.PHASE1_VIEW);
     }
 
-    /**
-     * Dipanggil UI setelah Phase 1 selesai
-     */
     public void onPhase1Finish() {
+        // First, get the raw reward and set it in the game state
+        phase1.getReward(); 
+
         if (phase1.isWin()) {
-            gameState.addMoney(phase1.getReward());
+            // Create context for AFTER_STAGE effects, including captured cards
+            EffectContext afterStageCtx = new EffectContext(
+                gameState, 
+                gameState.getRound(), 
+                gameState.getScorePhase1(), 
+                phase1.getCapturedCards()
+            );
+
+            // Apply all AFTER_STAGE effects (both point and non-point related)
+            gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
+            
+            // Add the final, potentially modified, score to the player's money
+            gameState.addMoney(gameState.getScorePhase1());
         } else {
             gameState.decreaseLife();
             if (gameState.isDead()) {
@@ -84,21 +96,21 @@ public class GameManager {
     private void proceedDebtPayment() {
         gameState.applyDebtInterest();
 
-        ui.showDebtPanel(amount -> {
-            gameState.payDebt(amount);
+        // ui.showDebtPanel(amount -> {
+        //     gameState.payDebt(amount);
 
-            if (gameState.isGameOver()) {
-                gameOver();
-            } else {
-                startPhase2();
-            }
-        });
+        //     if (gameState.isGameOver()) {
+        //         gameOver();
+        //     } else {
+        //         startPhase2();
+        //     }
+        // });
     }
 
     private void startPhase2() {
         phase2.loadShop();
         phase2.rollBiddingItem();
-        ui.showPhase2Panel(phase2);
+        ui.switchView(UIWindow.PHASE2_VIEW);
     }
 
     /**
@@ -152,11 +164,9 @@ public class GameManager {
         };
     }
 
-    /* =====================================================
-     * GAME OVER
-     * ===================================================== */
-
+    
+     // GAME OVER
     private void gameOver() {
-        ui.showGameOverPanel();
+        ui.switchView(UIWindow.MENU_VIEW);
     }
 }
