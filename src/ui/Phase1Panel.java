@@ -1,26 +1,108 @@
 package ui;
 
-import javax.swing.*;
-import javax.swing.border.TitledBorder; // Import ini mungkin diperlukan jika belum ada
-import java.awt.*;
+import core.GameManager;
+import core.Phase1Game;
+import model.card.Card;
+import model.state.GameState;
 
-// UI Trick-taking (Board Permainan)
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
+
 public class Phase1Panel extends JPanel {
 
+    private final GameManager gameManager;
     private static final Color INFO_BG = new Color(30, 30, 30);
     private static final Color BOARD_BG = new Color(30, 60, 30);
-    private static final Color TEXT_COLOR = Color.WHITE;
     private static final Color ACCENT_COLOR = new Color(255, 50, 50);
     private static final Color MONEY_COLOR = new Color(255, 200, 0);
 
-    // Warna Latar Belakang Nilai (VALUE_BG) tidak terpakai lagi karena kotak dihapus
+    private JPanel playerHandArea;
+    private JPanel dealerHandArea;
+    private JPanel trickPlayArea;
 
-    public Phase1Panel(UIWindow parentFrame) {
+    private JLabel playerTrickPileLabel;
+    private JLabel dealerTrickPileLabel;
+
+    private JLabel healthLabel;
+    private JLabel moneyLabel;
+    private JLabel debtLabel;
+    private JLabel targetLabel;
+    private JLabel bossNameLabel;
+    private JTextArea specialCardDescription = new JTextArea(); // Initialize here
+    private JLabel specialCardLabel;
+
+    public Phase1Panel(UIWindow parentFrame, GameManager gameManager) {
+        this.gameManager = gameManager;
         setLayout(new BorderLayout(10, 0));
         setBackground(Color.BLACK);
 
         add(createInfoPanel(parentFrame), BorderLayout.WEST);
         add(createBoardPanel(), BorderLayout.CENTER);
+
+        updateInfoPanel();
+    }
+
+    public void refresh() {
+        updateInfoPanel();
+        updateBoard();
+    }
+
+    private void updateInfoPanel() {
+        GameState state = gameManager.getGameState();
+        Phase1Game phase1 = gameManager.getPhase1Game();
+        int tricksToWin = 7;
+
+        healthLabel.setText("♥".repeat(Math.max(0, state.getPlayerHealth())));
+        moneyLabel.setText("$" + state.getMoney());
+        debtLabel.setText("$" + state.getDebt());
+        targetLabel.setText((tricksToWin - phase1.getTricksWon()) + " TRICKS TO WIN");
+
+        if (state.getCurrentDealer() != null) {
+            bossNameLabel.setText(state.getCurrentDealer().getName());
+        }
+    }
+
+    private void updateBoard() {
+        playerHandArea.removeAll();
+        dealerHandArea.removeAll();
+        trickPlayArea.removeAll();
+
+        List<Card> playerHand = gameManager.getGameState().getPlayerHand();
+        for (Card card : playerHand) {
+            playerHandArea.add(createHandCard(card, true));
+        }
+
+        int dealerHandSize = gameManager.getGameState().getDealerHand().size();
+        for (int i = 0; i < dealerHandSize; i++) {
+            dealerHandArea.add(createHandCard(null, false));
+        }
+
+        trickPlayArea.add(createTrickCard(gameManager.getGameState().getDealerPlayedCard()));
+        trickPlayArea.add(createTrickCard(gameManager.getGameState().getPlayerPlayedCard()));
+
+        Phase1Game phase1 = gameManager.getPhase1Game();
+        playerTrickPileLabel.setText("PLAYER PILE : " + phase1.getTricksWon() + " TRICKS WIN");
+        dealerTrickPileLabel.setText("DEALER PILE : " + phase1.getTricksLost() + " TRICKS WIN");
+
+
+        playerHandArea.revalidate();
+        playerHandArea.repaint();
+        dealerHandArea.revalidate();
+        dealerHandArea.repaint();
+        trickPlayArea.revalidate();
+        trickPlayArea.repaint();
+
+        playerTrickPileLabel.revalidate();
+        playerTrickPileLabel.repaint();
+        dealerTrickPileLabel.revalidate();
+        dealerTrickPileLabel.repaint();
     }
 
     private JPanel createInfoPanel(UIWindow parentFrame) {
@@ -28,72 +110,57 @@ public class Phase1Panel extends JPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setPreferredSize(new Dimension(280, 0));
         panel.setBackground(INFO_BG);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15)); // Ubah supaya flush kiri
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
-        // FORCE LEFT ALIGNMENT
         final float LEFT = Component.LEFT_ALIGNMENT;
 
-
-        JButton nextPhase = new JButton(" Back to menu ");
-        nextPhase.setAlignmentX(LEFT);
-        nextPhase.setBackground(ACCENT_COLOR.darker());
-        nextPhase.setForeground(Color.WHITE);
-        nextPhase.addActionListener(e -> parentFrame.switchView(UIWindow.MENU_VIEW));
-
-
-        panel.add(nextPhase);
+        JButton backButton = new JButton(" Back to menu ");
+        backButton.setAlignmentX(LEFT);
+        backButton.setBackground(ACCENT_COLOR.darker());
+        backButton.setForeground(Color.WHITE);
+        backButton.addActionListener(e -> parentFrame.switchView(UIWindow.MENU_VIEW));
+        panel.add(backButton);
         panel.add(Box.createVerticalStrut(15));
 
-        JLabel bossName = new JLabel("BOSS:", SwingConstants.LEFT);
-        JLabel bossName2 = new JLabel("ELITE ENFORCER", SwingConstants.LEFT);
-
-        bossName.setFont(new Font("Monospaced", Font.BOLD, 24));
-        bossName2.setFont(new Font("Monospaced", Font.BOLD, 24));
-
-        bossName.setForeground(ACCENT_COLOR);
-        bossName2.setForeground(ACCENT_COLOR);
-
-        bossName.setAlignmentX(LEFT);
-        bossName2.setAlignmentX(LEFT);
-
-        panel.add(bossName);
-        panel.add(bossName2);
+        JLabel bossLabel = new JLabel("BOSS:", SwingConstants.LEFT);
+        bossNameLabel = new JLabel("ELITE ENFORCER", SwingConstants.LEFT);
+        bossLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
+        bossNameLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
+        bossLabel.setForeground(ACCENT_COLOR);
+        bossNameLabel.setForeground(ACCENT_COLOR);
+        bossLabel.setAlignmentX(LEFT);
+        bossNameLabel.setAlignmentX(LEFT);
+        panel.add(bossLabel);
+        panel.add(bossNameLabel);
         panel.add(Box.createVerticalStrut(15));
 
         panel.add(fixAlign(createLabel("TARGET", Color.RED)));
-        panel.add(fixAlign(createValueLabel("5 TRICKS", Color.YELLOW)));
+        targetLabel = createValueLabel("7 TRICKS", Color.YELLOW);
+        panel.add(fixAlign(targetLabel));
         panel.add(Box.createVerticalStrut(10));
 
         panel.add(fixAlign(createLabel("TOTAL DEBT", Color.RED)));
-        panel.add(fixAlign(createValueLabel("$1000", MONEY_COLOR)));
+        debtLabel = createValueLabel("$1000", MONEY_COLOR);
+        panel.add(fixAlign(debtLabel));
         panel.add(Box.createVerticalStrut(10));
 
-        JPanel debtDetails = new JPanel(new GridLayout(1, 2, 5, 0));
-        debtDetails.setBackground(INFO_BG);
-        debtDetails.add(createUniformInfoBox("RATE: 5%", Color.YELLOW));
-        debtDetails.setAlignmentX(LEFT);
-        panel.add(debtDetails);
-        panel.add(Box.createVerticalStrut(10));
-
-        panel.add(fixAlign(createLabel("PLAYER'S MONEY", MONEY_COLOR)));
-        panel.add(fixAlign(createValueLabel("$100", MONEY_COLOR)));
+        panel.add(fixAlign(createLabel("PLAYER'S MONEY", Color.RED)));
+        moneyLabel = createValueLabel("$100", MONEY_COLOR);
+        panel.add(fixAlign(moneyLabel));
         panel.add(Box.createVerticalStrut(15));
 
-        JLabel HealthText = new JLabel("Health", SwingConstants.LEFT); // Perbaikan constructor
-        HealthText.setForeground(Color.GREEN); // Atur warna
-        HealthText.setAlignmentX(Component.LEFT_ALIGNMENT); // Tambahkan alignment
+        JLabel healthText = new JLabel("Health", SwingConstants.LEFT);
+        healthText.setForeground(Color.GREEN);
+        healthText.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(healthText);
 
-        JLabel healthLabel = new JLabel("♥♥♥", SwingConstants.LEFT);
+        healthLabel = new JLabel("♥♥♥", SwingConstants.LEFT);
         healthLabel.setFont(new Font("Monospaced", Font.BOLD, 36));
         healthLabel.setForeground(ACCENT_COLOR);
-        healthLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Perbaikan LEFT
-
-        panel.add(HealthText);
+        healthLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(healthLabel);
-
         panel.add(Box.createVerticalStrut(20));
 
-        // Keep slot centered but not shifting upper content
         panel.add(Box.createVerticalGlue());
         JPanel slot = createSpecialCardSlot();
         slot.setAlignmentX(LEFT);
@@ -102,229 +169,177 @@ public class Phase1Panel extends JPanel {
 
         return panel;
     }
+
     private Component fixAlign(JComponent c) {
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         return c;
     }
 
-
-
     private JPanel createBoardPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBackground(BOARD_BG);
 
-        // TOP: Dealer's Hand Area (13 cards)
-        JPanel dealerHandArea = createCardAreaPlaceholder("DEALER'S HAND (13 CARDS UNKNOWN)", 140, false, BOARD_BG.brighter());
+        dealerHandArea = createCardAreaPanel("DEALER'S HAND", 140, BOARD_BG.brighter());
         panel.add(dealerHandArea, BorderLayout.NORTH);
 
-        // EAST: Trick Pile
-        JPanel trickPilePanel = new JPanel(new GridLayout(2, 1, 5, 5));
-        trickPilePanel.setOpaque(false);
-        // PERUBAHAN DI SINI: Ganti nama label menjadi dua baris menggunakan spasi lebar
-        trickPilePanel.add(createAreaBox("DEALER PILE (TRICKS LOST)", new Dimension(140, 180), ACCENT_COLOR.darker()));
-        trickPilePanel.add(createAreaBox("PLAYER PILE (TRICKS WON)", new Dimension(140, 180), new Color(0, 150, 0)));
-        panel.add(trickPilePanel, BorderLayout.EAST);
+        // Panel to hold center area and right-side piles
+        JPanel gameBoardCenterPanel = new JPanel(new BorderLayout(5, 5));
+        gameBoardCenterPanel.setOpaque(false);
 
+        // Center Area (trick play area)
         JPanel centerArea = new JPanel();
-        centerArea.setLayout(new BoxLayout(centerArea, BoxLayout.Y_AXIS)); // Diubah ke Y_AXIS
+        centerArea.setLayout(new BoxLayout(centerArea, BoxLayout.Y_AXIS));
         centerArea.setOpaque(false);
         centerArea.add(Box.createVerticalGlue());
 
-        // Tengah: Kartu yang dimainkan saat ini
-        JPanel trickPlay = new JPanel(new FlowLayout(FlowLayout.CENTER, 50, 50));
-        trickPlay.setOpaque(false);
-        trickPlay.add(createTrickCardPlaceholder(false));
-        trickPlay.add(createTrickCardPlaceholder(true));
-        // Atur agar trickPlay berada di tengah secara horizontal
-        trickPlay.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerArea.add(trickPlay);
+        trickPlayArea = new JPanel(new FlowLayout(FlowLayout.CENTER, 50, 50));
+        trickPlayArea.setOpaque(false);
+        centerArea.add(trickPlayArea);
+        centerArea.add(Box.createVerticalGlue());
+        gameBoardCenterPanel.add(centerArea, BorderLayout.CENTER);
 
-        // BOTTOM: Player's Hand Area (13 cards)
-        JPanel playerHandArea = createCardAreaPlaceholder("PLAYER HAND (13 CARDS YOUR FATE)", 140, true, new Color(40, 70, 40));
+        // Right column container to push piles to the bottom
+        JPanel rightColumnContainer = new JPanel(new BorderLayout());
+        rightColumnContainer.setOpaque(false);
+
+        // Stack Dealer Pile and Player Pile vertically
+        JPanel pilesStackPanel = new JPanel();
+        pilesStackPanel.setLayout(new BoxLayout(pilesStackPanel, BoxLayout.Y_AXIS));
+        pilesStackPanel.setOpaque(false);
+
+        // Dealer Pile
+        JPanel dealerPileWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        dealerPileWrapper.setOpaque(false);
+        dealerTrickPileLabel = createTrickPileLabel("DEALER PILE : 0 TRICKS WIN", ACCENT_COLOR.darker());
+        dealerPileWrapper.add(dealerTrickPileLabel);
+        pilesStackPanel.add(dealerPileWrapper);
+
+        // Player Pile
+        JPanel playerPileWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        playerPileWrapper.setOpaque(false);
+        playerTrickPileLabel = createTrickPileLabel("PLAYER PILE : 0 TRICKS WIN", new Color(0, 150, 0));
+        playerPileWrapper.add(playerTrickPileLabel);
+        pilesStackPanel.add(playerPileWrapper);
+
+        rightColumnContainer.add(pilesStackPanel, BorderLayout.SOUTH); // Piles stacked at the SOUTH of rightColumnContainer
+        gameBoardCenterPanel.add(rightColumnContainer, BorderLayout.EAST); // Add rightColumnContainer to the EAST of gameBoardCenterPanel
+        panel.add(gameBoardCenterPanel, BorderLayout.CENTER); // Add gameBoardCenterPanel to the main panel's CENTER
+
+        // Player Hand Area (at the bottom)
+        playerHandArea = createCardAreaPanel("PLAYER HAND", 140, new Color(40, 70, 40));
         panel.add(playerHandArea, BorderLayout.SOUTH);
 
-        panel.add(centerArea, BorderLayout.CENTER);
-        return panel;
-    }
-
-
-    /**
-     * Membuat Label Status (Judul) yang diletakkan di luar kotak nilai.
-     */
-    private JLabel createLabel(String label, Color fgColor) {
-        JLabel statusLabel = new JLabel(label, SwingConstants.LEFT);
-        statusLabel.setForeground(fgColor);
-        statusLabel.setFont(new Font("Monospaced", Font.BOLD, 12));
-        statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return statusLabel;
-    }
-
-    /**
-     * Membuat Label Nilai yang ukurannya menyesuaikan isi, tanpa kotak solid.
-     * Teks diinden 10px secara visual agar terstruktur di bawah label judul.
-     */
-    private JLabel createValueLabel(String value, Color fgColor) {
-        JLabel valueLabel = new JLabel(value, SwingConstants.LEFT);
-        valueLabel.setForeground(fgColor);
-        valueLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
-
-        // Inden visual untuk tampilan yang lebih rapi
-        valueLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-        valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return valueLabel;
-    }
-
-    /**
-     * Membuat kotak info kecil yang seragam (misal: Late Charge).
-     */
-    private JPanel createUniformInfoBox(String label, Color fgColor) {
-        JPanel box = new JPanel(new GridLayout(1, 1));
-        box.setBorder(BorderFactory.createLineBorder(Color.GRAY.darker()));
-        box.setPreferredSize(new Dimension(220, 50));
-        box.setBackground(new Color(50, 50, 50));
-
-        JLabel statusLabel = new JLabel(label, SwingConstants.CENTER);
-        statusLabel.setForeground(fgColor);
-        statusLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
-        box.add(statusLabel);
-        box.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return box;
-    }
-
-    private JPanel createSpecialCardSlot() {
-        // Ganti GridLayout menjadi BorderLayout untuk menata Kartu (Kiri) dan Deskripsi (Kanan)
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(INFO_BG);
-
-        panel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY.darker()),
-                "SPECIAL CARD (ACTIVE)", // Judul diubah
-                TitledBorder.CENTER, TitledBorder.TOP,
-                new Font("Monospaced", Font.BOLD, 14),
-                Color.ORANGE
-        ));
-
-        // 1. Area Kartu (Kiri - WEST)
-        JPanel cardPlaceholder = new JPanel(new GridBagLayout());
-        cardPlaceholder.setPreferredSize(new Dimension(80, 120)); // Ukuran kartu
-        cardPlaceholder.setBackground(new Color(60, 60, 60));
-        cardPlaceholder.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
-
-        JLabel label = new JLabel("ACTIVE", SwingConstants.CENTER);
-        label.setForeground(Color.YELLOW);
-        label.setFont(new Font("Monospaced", Font.BOLD, 12));
-        cardPlaceholder.add(label);
-
-        // Wrap cardPlaceholder agar tidak melar di BorderLayout.WEST
-        JPanel cardWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        cardWrapper.setOpaque(false);
-        cardWrapper.add(cardPlaceholder);
-        panel.add(cardWrapper, BorderLayout.WEST);
-
-
-        // 2. Area Deskripsi (Kanan - CENTER)
-        JTextArea description = new JTextArea();
-        description.setText("Kartu aktif saat ini.\n\n[CONTOH]: Gain +1 Nyawa setelah memenangkan 3 Trick.");
-        description.setWrapStyleWord(true);
-        description.setLineWrap(true);
-        description.setEditable(false);
-        description.setBackground(new Color(40, 40, 40));
-        description.setForeground(Color.LIGHT_GRAY);
-        description.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        description.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        // JScrollPane untuk teks deskripsi
-        JScrollPane descScrollPane = new JScrollPane(description);
-        descScrollPane.setPreferredSize(new Dimension(150, 120));
-        descScrollPane.setBorder(BorderFactory.createLineBorder(new Color(70, 70, 70)));
-        descScrollPane.getViewport().setBackground(new Color(40, 40, 40));
-
-        panel.add(descScrollPane, BorderLayout.CENTER);
-
-
-        // Pertahankan max size panel, tetapi disesuaikan untuk 1 kartu
-        panel.setMaximumSize(new Dimension(400, 200));
-        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        updateBoard();
 
         return panel;
     }
 
-
-
-    private JPanel createCardAreaPlaceholder(String label, int height, boolean clickable, Color bgColor) {
+    private JPanel createCardAreaPanel(String label, int height, Color bgColor) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 3));
         panel.setPreferredSize(new Dimension(getWidth(), height));
         panel.setBackground(bgColor);
         panel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.DARK_GRAY),
-                label,
-                0,
-                0,
-                new Font("Monospaced", Font.PLAIN, 10),
-                Color.GRAY
-        ));
-
-        for (int i = 0; i < 13; i++) {
-            JPanel card = createHandCardPlaceholder(clickable);
-            panel.add(card);
-        }
+                label, 0, 0, new Font("Monospaced", Font.PLAIN, 10), Color.GRAY));
         return panel;
     }
 
-    private JPanel createHandCardPlaceholder(boolean faceUp) {
-        JPanel card = new JPanel();
-        card.setPreferredSize(new Dimension(80, 120));
-        card.setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
-        card.setBackground(faceUp ? Color.WHITE : Color.BLACK);
-        if (faceUp) {
-            JLabel label = new JLabel("", SwingConstants.CENTER);
-            label.setFont(new Font("Serif", Font.BOLD, 24));
-            label.setForeground(Color.BLACK);
-            card.add(label);
+    private JLabel createHandCard(Card card, boolean isPlayer) {
+        ImageIcon icon = CardImageLoader.loadCardImage(isPlayer ? card : null);
+        Image image = icon.getImage().getScaledInstance(80, 120, Image.SCALE_SMOOTH);
+        JLabel cardLabel = new JLabel(new ImageIcon(image));
+        cardLabel.setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
+
+        if (isPlayer && card != null) {
+            cardLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            cardLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    gameManager.playCard(card);
+                }
+            });
         }
-        return card;
+        return cardLabel;
     }
 
-    private JPanel createTrickCardPlaceholder(boolean faceUp) {
-        JPanel card = new JPanel();
-        card.setPreferredSize(new Dimension(100, 150));
-        card.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
-        card.setBackground(faceUp ? Color.WHITE : Color.BLACK);
-        if (faceUp) {
-            JLabel label = new JLabel("A♠", SwingConstants.CENTER);
-            label.setFont(new Font("Serif", Font.BOLD, 30));
-            label.setForeground(Color.BLACK);
-            card.add(label);
+    private JLabel createTrickCard(Card card) {
+        if (card == null) {
+            JLabel emptyLabel = new JLabel();
+            emptyLabel.setPreferredSize(new Dimension(100, 150));
+            return emptyLabel;
         }
-        return card;
+        ImageIcon icon = CardImageLoader.loadCardImage(card);
+        Image image = icon.getImage().getScaledInstance(100, 150, Image.SCALE_SMOOTH);
+        JLabel cardLabel = new JLabel(new ImageIcon(image));
+        cardLabel.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        return cardLabel;
     }
 
-    private JPanel createAreaBox(String label, Dimension dim, Color accent) {
-        JPanel box = new JPanel(new BorderLayout());
-        box.setPreferredSize(dim);
-        box.setBackground(new Color(20, 20, 20));
-
-        // Tulis teks TITLE di atas, subtext di bawah
-        String[] splitText = label.split("\\(");
-        String mainTitle = splitText[0].trim();
-        String subText = "(" + splitText[1];
-
-        TitledBorder title = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(accent, 2),
-                mainTitle,
-                TitledBorder.CENTER,
-                TitledBorder.TOP,
-                new Font("Monospaced", Font.BOLD, 11),
-                accent
-        );
-        box.setBorder(title);
-
-        JLabel subLabel = new JLabel(subText, SwingConstants.CENTER);
-        subLabel.setForeground(new Color(200, 200, 200));
-        subLabel.setFont(new Font("Monospaced", Font.PLAIN, 10));
-        box.add(subLabel, BorderLayout.SOUTH);
-
-        return box;
+    private JLabel createLabel(String text, Color fgColor) {
+        JLabel label = new JLabel(text, SwingConstants.LEFT);
+        label.setForeground(fgColor);
+        label.setFont(new Font("Monospaced", Font.BOLD, 12));
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
     }
 
+    private JLabel createValueLabel(String value, Color fgColor) {
+        JLabel label = new JLabel(value, SwingConstants.LEFT);
+        label.setForeground(fgColor);
+        label.setFont(new Font("Monospaced", Font.BOLD, 18));
+        label.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
+    }
+
+    private JPanel createSpecialCardSlot() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(INFO_BG);
+        panel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY.darker()),
+                "SPECIAL CARD (ACTIVE)", TitledBorder.CENTER, TitledBorder.TOP,
+                new Font("Monospaced", Font.BOLD, 14), Color.ORANGE));
+
+        specialCardLabel = new JLabel();
+        specialCardLabel.setPreferredSize(new Dimension(80, 120));
+        specialCardLabel.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+
+        JPanel cardWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        cardWrapper.setOpaque(false);
+        cardWrapper.add(specialCardLabel);
+        panel.add(cardWrapper, BorderLayout.WEST);
+
+        specialCardDescription.setText("No special card active.");
+        specialCardDescription.setWrapStyleWord(true);
+        specialCardDescription.setLineWrap(true);
+        specialCardDescription.setEditable(false);
+        specialCardDescription.setBackground(new Color(40, 40, 40));
+        specialCardDescription.setForeground(Color.LIGHT_GRAY);
+        specialCardDescription.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        specialCardDescription.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JScrollPane descScrollPane = new JScrollPane(specialCardDescription);
+        descScrollPane.setPreferredSize(new Dimension(150, 120));
+        descScrollPane.setBorder(BorderFactory.createLineBorder(new Color(70, 70, 70)));
+        panel.add(descScrollPane, BorderLayout.CENTER);
+
+        panel.setMaximumSize(new Dimension(400, 200));
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return panel;
+    }
+
+    // New helper method to create the simplified trick pile labels
+    private JLabel createTrickPileLabel(String text, Color accentColor) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        // label.setPreferredSize(new Dimension(140, 180)); // REMOVED: Let it size itself
+        label.setForeground(new Color(200, 200, 200));
+        label.setFont(new Font("Monospaced", Font.BOLD, 11));
+        label.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(accentColor, 2), // Outer border
+                new EmptyBorder(5, 5, 5, 5) // Inner padding to give text some breathing room
+        ));
+        label.setBackground(new Color(20, 20, 20)); // Background for the label itself
+        label.setOpaque(true); // Make background visible
+        return label;
+    }
 }

@@ -1,14 +1,15 @@
 package model.entity.dealer;
 
 import core.Rules;
+import model.card.Card;
+import model.card.NormalCard;
+import model.card.SpecialCard;
+import model.card.Suit;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-import model.card.Card;
-import model.card.NormalCard;
-import model.card.SpecialCard;
-import model.card.Suit; // Import Rules class
 
 public class FinalBossDealer extends BossDealer {
 
@@ -58,21 +59,26 @@ public class FinalBossDealer extends BossDealer {
     }
 
     @Override
-    public Card chooseCard(Card playerCard, List<Card> playerHand) {
+    public Card chooseCard(Card playerCard, List<Card> dealerHand) {
+        if (dealerHand.isEmpty()) return null;
+
+        // If dealer leads (playerCard is null), play the lowest card
+        if (playerCard == null) {
+            return dealerHand.stream()
+                    .min(Comparator.comparingInt(Card::getValue))
+                    .orElse(null);
+        }
+
         Suit leadSuit = playerCard.getSuit();
         int effectivePlayerValue = Rules.scoreCard(playerCard); // FinalBossDealer does not modify player card value
 
-        List<Card> hand = getHand();
-
         // 1. Filter cards that follow suit
-        List<Card> followSuitCards = hand.stream()
+        List<Card> followSuitCards = dealerHand.stream()
                 .filter(card -> card.getSuit() == leadSuit)
                 .collect(Collectors.toList());
 
         // 2. Try to play a card of the lastBossSuit first (Dominance effect)
-        if (lastBossSuit != null) { // lastBossSuit is set after the boss plays a card, but is null on first trick.
-                                    // For initial trick or if boss hasn't played lastBossSuit yet, it won't apply here.
-                                    // The skill is active from trick 1, but depends on boss playing a card to set lastBossSuit.
+        if (lastBossSuit != null) {
             List<Card> dominanceCards = followSuitCards.stream()
                     .filter(card -> card.getSuit() == lastBossSuit)
                     .collect(Collectors.toList());
@@ -80,8 +86,8 @@ public class FinalBossDealer extends BossDealer {
             if (!dominanceCards.isEmpty()) {
                 // Find a card that wins under Dominance rule
                 List<Card> winningDominanceCards = dominanceCards.stream()
-                        .filter(dealerCard -> {
-                            int effectiveBossValue = getEffectiveDealerCardValue(dealerCard);
+                        .filter(card -> {
+                            int effectiveBossValue = getEffectiveDealerCardValue(card);
                             // Player wins if their card is significantly stronger (diff >= 3)
                             // So, boss wins if (effectivePlayerValue - effectiveBossValue) < 3
                             return (effectivePlayerValue - effectiveBossValue) < 3;
@@ -96,12 +102,12 @@ public class FinalBossDealer extends BossDealer {
                 }
             }
         }
-        
+
         // 3. If no winning Dominance card, or Dominance not applicable, fall back to standard winning logic
         // Try to find a winning card that follows suit
         if (!followSuitCards.isEmpty()) {
             List<Card> winningFollowSuitCards = followSuitCards.stream()
-                    .filter(dealerCard -> getEffectiveDealerCardValue(dealerCard) > effectivePlayerValue)
+                    .filter(card -> getEffectiveDealerCardValue(card) > effectivePlayerValue)
                     .collect(Collectors.toList());
 
             if (!winningFollowSuitCards.isEmpty()) {
@@ -118,7 +124,7 @@ public class FinalBossDealer extends BossDealer {
         }
 
         // 4. If no cards that follow suit, discard the lowest overall card
-        return hand.stream()
+        return dealerHand.stream()
                 .min(Comparator.comparingInt(this::getEffectiveDealerCardValue))
                 .orElseThrow(() -> new IllegalStateException("Hand cannot be empty at this point"));
     }

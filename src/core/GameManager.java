@@ -1,9 +1,6 @@
 package core;
 
-import java.util.List;
-import java.util.Random;
-import model.card.EffectTrigger;
-import model.card.SpecialCard;
+import model.card.*;
 import model.entity.dealer.Dealer;
 import model.entity.dealer.EconomistBoss;
 import model.entity.dealer.FinalBossDealer;
@@ -11,10 +8,15 @@ import model.entity.dealer.TacticianBoss;
 import model.state.GameState;
 import ui.UIWindow;
 
-/**
- * Mengontrol flow seluruh game (State Machine)
- * Versi refactor: boss & stage terhubung dengan benar
- */
+import javax.swing.Timer;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+
 public class GameManager {
 
     private final GameState gameState;
@@ -31,50 +33,122 @@ public class GameManager {
         this.phase2 = new Phase2Game(gameState, shop);
     }
 
-    /* =====================================================
-     * GAME FLOW
-     * ===================================================== */
+    public void playCard(Card card) {
+        // Player can only play if:
+        // 1. No player card is currently on the table (playerPlayedCard is null)
+        // 2. It's the player's turn to lead (dealerLeadsTrick is false) OR the dealer has already played a card
+        if (gameState.getPlayerPlayedCard() != null || (gameState.isDealerLeadsTrick() && gameState.getDealerPlayedCard() == null)) {
+            return;
+        }
+
+        gameState.getPlayerHand().remove(card);
+        gameState.setPlayerPlayedCard(card);
+
+        // If player leads, set this card as the lead card
+        if (!gameState.isDealerLeadsTrick()) {
+            gameState.setCurrentLeadCard(card);
+        }
+
+        // If player leads, now dealer plays
+        if (!gameState.isDealerLeadsTrick()) {
+            Dealer dealer = gameState.getCurrentDealer();
+            Card dealerCard = dealer.chooseCard(card, gameState.getDealerHand());
+
+            if (dealerCard != null) {
+                gameState.getDealerHand().remove(dealerCard);
+                gameState.setDealerPlayedCard(dealerCard);
+            }
+        }
+
+        ui.getPhase1Panel().refresh();
+
+        // Resolve trick after a short delay
+        Timer timer = new Timer(1500, e -> resolveTrick(card, gameState.getDealerPlayedCard()));
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    private void playDealerLeadCard() {
+        Dealer dealer = gameState.getCurrentDealer();
+        // Dealer leads, so playerCard is null
+        Card dealerCard = dealer.chooseCard(null, gameState.getDealerHand());
+
+        if (dealerCard != null) {
+            gameState.getDealerHand().remove(dealerCard);
+            gameState.setDealerPlayedCard(dealerCard);
+            gameState.setCurrentLeadCard(dealerCard); // Set dealer's card as lead card
+        }
+        ui.getPhase1Panel().refresh();
+    }
+
+    private void resolveTrick(Card playerCard, Card dealerCard) {
+        // Use the new Rules.getTrickWinner method
+        boolean playerWins = Rules.getTrickWinner(gameState.getCurrentLeadCard(), playerCard, dealerCard);
+
+        if (playerWins) {
+            phase1.playerWinsTrick(playerCard, dealerCard);
+            gameState.setDealerLeadsTrick(false); // Player wins, player leads next trick
+        } else {
+            phase1.dealerWinsTrick(playerCard, dealerCard);
+            gameState.setDealerLeadsTrick(true); // Dealer wins, dealer leads next trick
+        }
+        System.out.println("Player plays " + playerCard.getName() + ", Dealer plays " + (dealerCard != null ? dealerCard.getName() : "nothing") + ". Player wins: " + playerWins);
+
+        // Clear played cards and lead card
+        gameState.setPlayerPlayedCard(null);
+        gameState.setDealerPlayedCard(null);
+        gameState.setCurrentLeadCard(null);
+
+        // Check if round is over
+        if (gameState.getPlayerHand().isEmpty()) {
+            onPhase1Finish();
+        } else {
+            // Start next trick
+            startTrick();
+        }
+    }
+
 
     public void startGame() {
         ui.switchView(UIWindow.MENU_VIEW);
     }
 
-    /**
-     * Mulai 1 run baru (Stage 1)
-     */
     public void startRun() {
         gameState.startNewRun();
-
-        // Set boss sesuai stage awal
         setDealerForCurrentStage();
-
-        // WAJIB: start Phase 1 logic
+        setupNewRound();
         phase1.start();
+        startPhase1(); // Call startPhase1() first to switch view
+        startTrick(); // Then start the first trick
+    }
 
-        startPhase1();
+    private void startTrick() {
+        if (gameState.isDealerLeadsTrick()) {
+            playDealerLeadCard();
+        } else {
+            // Player leads, just refresh UI to enable player input
+            ui.getPhase1Panel().refresh();
+        }
     }
 
     private void startPhase1() {
         ui.switchView(UIWindow.PHASE1_VIEW);
+        // The refresh here is important for initial state after view switch
+        if (ui.getPhase1Panel() != null) {
+            ui.getPhase1Panel().refresh();
+        }
     }
 
     public void onPhase1Finish() {
-        // First, get the raw reward and set it in the game state
-        phase1.getReward(); 
-
+        phase1.getReward();
         if (phase1.isWin()) {
-            // Create context for AFTER_STAGE effects, including captured cards
             EffectContext afterStageCtx = new EffectContext(
-                gameState, 
-                gameState.getRound(), 
-                gameState.getScorePhase1(), 
-                phase1.getCapturedCards()
+                    gameState,
+                    gameState.getRound(),
+                    gameState.getScorePhase1(),
+                    phase1.getCapturedCards()
             );
-
-            // Apply all AFTER_STAGE effects (both point and non-point related)
             gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
-            
-            // Add the final, potentially modified, score to the player's money
             gameState.addMoney(gameState.getScorePhase1());
         } else {
             gameState.decreaseLife();
@@ -83,26 +157,23 @@ public class GameManager {
                 return;
             }
         }
-
-        proceedDebtPayment();
+        // Instead of proceeding to debt payment, show the result panel
+        ui.switchView(UIWindow.PHASE1_RESULT_VIEW);
+        ui.getPhase1ResultPanel().updateResults();
     }
 
-    /* =====================================================
-     * PHASE 2
-     * ===================================================== */
+    public void continueToPhase2() {
+        // This method is called from Phase1ResultPanel
+        if (gameState.isDead()) {
+            gameOver(); // If player is dead, go to game over (menu)
+        } else {
+            proceedDebtPayment(); // Otherwise, continue to debt payment and then Phase 2
+        }
+    }
 
     private void proceedDebtPayment() {
         gameState.applyDebtInterest();
-
-        // ui.showDebtPanel(amount -> {
-        //     gameState.payDebt(amount);
-
-        //     if (gameState.isGameOver()) {
-        //         gameOver();
-        //     } else {
-        //         startPhase2();
-        //     }
-        // });
+        startPhase2();
     }
 
     private void startPhase2() {
@@ -111,22 +182,43 @@ public class GameManager {
         ui.switchView(UIWindow.PHASE2_VIEW);
     }
 
-    /**
-     * Dipanggil UI setelah Phase 2 selesai
-     */
     public void onPhase2Finish() {
         gameState.increaseRound();
-
-        // Ganti boss sesuai stage baru
         setDealerForCurrentStage();
-
+        setupNewRound();
         phase1.start();
-        startPhase1();;
+        startPhase1(); // Call startPhase1() first to switch view
+        startTrick(); // Then start the first trick of the new round
     }
 
-    /* =====================================================
-     * STAGE → BOSS FACTORY (INTI REFACTOR)
-     * ===================================================== */
+    private void setupNewRound() {
+        List<Card> deck = gameState.getDeck();
+        List<Card> playerHand = gameState.getPlayerHand();
+        List<Card> dealerHand = gameState.getDealerHand();
+
+        deck.clear();
+        playerHand.clear();
+        dealerHand.clear();
+        gameState.setPlayerPlayedCard(null);
+        gameState.setDealerPlayedCard(null);
+        gameState.setCurrentLeadCard(null); // Reset lead card
+        phase1.reset();
+
+        for (Suit suit : Suit.values()) {
+            for (Rank rank : Rank.values()) {
+                deck.add(new NormalCard(suit, rank));
+            }
+        }
+
+        Collections.shuffle(deck, new Random(gameState.getSeed() + gameState.getRound()));
+
+        for (int i = 0; i < 13; i++) {
+            playerHand.add(deck.remove(0));
+            dealerHand.add(deck.remove(0));
+        }
+        // Ensure dealer leads the first trick of the new round
+        gameState.setDealerLeadsTrick(true);
+    }
 
     private void setDealerForCurrentStage() {
         int stage = gameState.getRound();
@@ -136,35 +228,68 @@ public class GameManager {
 
     private Dealer createDealerForStage(int stage) {
         long seed = gameState.getSeed();
-        Random rng = new Random(seed + stage); // beda tiap stage, tapi deterministik
+        Random rng = new Random(seed + stage);
 
         return switch (stage) {
             case 1 -> new Dealer("INTRO BOSS", rng) {
                 @Override
-                public int bid(SpecialCard biddingItem, int round) {
-                    return 0; // tutorial / no bidding pressure
-                }
-
+                public int bid(SpecialCard biddingItem, int round) { return 0; }
                 @Override
-                public model.card.Card chooseCard(
-                        model.card.Card playerCard,
-                        List<model.card.Card> playerHand
-                ) {
-                    return getHand().get(0); // dummy logic
+                public Card chooseCard(Card playerCard, List<Card> dealerHand) {
+                    if (dealerHand.isEmpty()) return null;
+
+                    // If dealer leads (playerCard is null), play the lowest card
+                    if (playerCard == null) {
+                        return dealerHand.stream()
+                                .min(Comparator.comparingInt(Card::getValue))
+                                .orElse(null);
+                    }
+
+                    Suit leadSuit = playerCard.getSuit();
+                    // Filter cards that follow suit
+                    List<Card> followSuitCards = dealerHand.stream()
+                            .filter(c -> c.getSuit() == leadSuit)
+                            .collect(Collectors.toList());
+
+                    // If can follow suit
+                    if (!followSuitCards.isEmpty()) {
+                        // Try to win with a higher card of the same suit
+                        Optional<Card> winningCard = followSuitCards.stream()
+                                .filter(c -> c.getRank().getValue() > playerCard.getRank().getValue())
+                                .min(Comparator.comparingInt(Card::getValue)); // Play lowest winning card
+
+                        if (winningCard.isPresent()) {
+                            return winningCard.get();
+                        } else {
+                            // If cannot win, play the lowest card of the same suit
+                            return followSuitCards.stream()
+                                    .min(Comparator.comparingInt(Card::getValue))
+                                    .orElse(null);
+                        }
+                    } else {
+                        // If cannot follow suit, play the lowest card overall (discard)
+                        return dealerHand.stream()
+                                .min(Comparator.comparingInt(Card::getValue))
+                                .orElse(null);
+                    }
                 }
             };
-
             case 2 -> new TacticianBoss(rng);
             case 3 -> new EconomistBoss(rng);
             case 4 -> new FinalBossDealer(rng);
-
             default -> new FinalBossDealer(rng);
         };
     }
 
-    
-     // GAME OVER
     private void gameOver() {
         ui.switchView(UIWindow.MENU_VIEW);
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public Phase1Game getPhase1Game() {
+        return phase1;
     }
 }
