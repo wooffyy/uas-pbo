@@ -1,3 +1,5 @@
+package main;
+
 import core.GameManager;
 import model.card.EffectTrigger;
 import model.card.EffectType;
@@ -36,8 +38,9 @@ public class Main {
             // 4. Initialize Game Manager and link it with the UI and GameState.
             GameManager gameManager = new GameManager(gameState, ui, itemPool);
 
-            // 5. Start the game by showing the main menu.
-            gameManager.startGame();
+            // 5. Initialize UI components and start the game.
+            //    This is called after gameManager is created to solve circular dependency.
+            ui.initComponents(gameManager);
         });
     }
 }

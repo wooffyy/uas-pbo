@@ -4,6 +4,8 @@ import java.util.Random;
 import model.card.Card;
 import model.card.Suit;
 import model.card.SpecialCard;
+import model.card.NormalCard; // New import
+import core.Rules; // New import
 
 /**
  * Base class untuk semua Boss Dealer.
@@ -23,6 +25,14 @@ public abstract class BossDealer extends Dealer {
 
     public BossDealer(String name, Random rng) {
         super(name, rng);
+    }
+
+    // Helper method to get effective value of dealer's card (considering its rankModifier)
+    protected int getEffectiveDealerCardValue(Card dealerCard) {
+        // Create a temporary card to apply the dealer's own rankModifier for evaluation
+        Card tempCard = new NormalCard(dealerCard.getSuit(), dealerCard.getRank());
+        tempCard.modifyRank(this.getRankModifier()); // Apply the persistent rank modifier from the dealer
+        return Rules.scoreCard(tempCard);
     }
 
     /* ======================================================

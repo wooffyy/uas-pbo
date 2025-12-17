@@ -6,7 +6,7 @@ import java.util.Random;
 import model.card.Card;
 import model.card.SpecialCard;
 
-// Superclass musuh
+// subclass dealer tutorial 
 abstract public class Dealer {
     private List<Card> hand;
     private int tricksWon;
@@ -31,7 +31,7 @@ abstract public class Dealer {
     public int getRankModifier() {
         return this.rankModifier;
     }
-    
+
     public void resetHand(List<Card> newHand){
         this.hand = newHand;
     }

@@ -1,7 +1,7 @@
 package ui;
-
-import javax.swing.*;
+import core.GameManager;
 import java.awt.*;
+import javax.swing.*;
 
 public class UIWindow extends JFrame {
 
@@ -13,6 +13,7 @@ public class UIWindow extends JFrame {
 
     private final CardLayout cardLayout;
     private final JPanel mainPanel;
+    private GameManager gameManager;
 
     public UIWindow() {
         setTitle("Escape from Pinjol - Life and Death Edition");
@@ -25,14 +26,20 @@ public class UIWindow extends JFrame {
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
+        add(mainPanel);
+
+        setLocationRelativeTo(null);
+    }
+
+    public void initComponents(GameManager gameManager) {
+        this.gameManager = gameManager;
 
         // ================= INIT ALL VIEWS =================
-        MainMenuPanel menuPanel = new MainMenuPanel(this);
+        MainMenuPanel menuPanel = new MainMenuPanel(this, gameManager);
         Phase1Panel phase1Panel = new Phase1Panel(this);
         Phase2ShopPanel phase2Panel = new Phase2ShopPanel(this);
         BiddingPanel biddingPanel = new BiddingPanel(this);
         CardCollectionPanel collectionPanel = new CardCollectionPanel(this);
-
 
         // ================= REGISTER VIEWS =================
         mainPanel.add(menuPanel, MENU_VIEW);
@@ -42,10 +49,7 @@ public class UIWindow extends JFrame {
         mainPanel.add(collectionPanel, CARD_COLLECTION_VIEW);
 
         // ================= FINAL SETUP =================
-        add(mainPanel);
         cardLayout.show(mainPanel, MENU_VIEW);
-
-        setLocationRelativeTo(null);
         setVisible(true);
     }
 
