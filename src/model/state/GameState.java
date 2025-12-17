@@ -41,6 +41,7 @@ public class GameState {
     // Flags
     private boolean gameOver;
     private boolean playerLeads; // This might be redundant with dealerLeadsTrick, consider consolidating
+    private boolean phase1Won; // Track if the player won the last Phase 1
 
     // RNG
     private long seed;
@@ -54,19 +55,49 @@ public class GameState {
     }
 
     // Getters for Card Game State
-    public List<Card> getDeck() { return deck; }
-    public List<Card> getPlayerHand() { return playerHand; }
-    public List<Card> getDealerHand() { return dealerHand; }
-    public Card getPlayerPlayedCard() { return playerPlayedCard; }
-    public Card getDealerPlayedCard() { return dealerPlayedCard; }
-    public Card getCurrentLeadCard() { return currentLeadCard; } // New getter
-    public boolean isDealerLeadsTrick() { return dealerLeadsTrick; }
+    public List<Card> getDeck() {
+        return deck;
+    }
 
-    public void setPlayerPlayedCard(Card card) { this.playerPlayedCard = card; }
-    public void setDealerPlayedCard(Card card) { this.dealerPlayedCard = card; }
-    public void setCurrentLeadCard(Card card) { this.currentLeadCard = card; } // New setter
-    public void setDealerLeadsTrick(boolean dealerLeadsTrick) { this.dealerLeadsTrick = dealerLeadsTrick; }
+    public List<Card> getPlayerHand() {
+        return playerHand;
+    }
 
+    public List<Card> getDealerHand() {
+        return dealerHand;
+    }
+
+    public Card getPlayerPlayedCard() {
+        return playerPlayedCard;
+    }
+
+    public Card getDealerPlayedCard() {
+        return dealerPlayedCard;
+    }
+
+    public Card getCurrentLeadCard() {
+        return currentLeadCard;
+    } // New getter
+
+    public boolean isDealerLeadsTrick() {
+        return dealerLeadsTrick;
+    }
+
+    public void setPlayerPlayedCard(Card card) {
+        this.playerPlayedCard = card;
+    }
+
+    public void setDealerPlayedCard(Card card) {
+        this.dealerPlayedCard = card;
+    }
+
+    public void setCurrentLeadCard(Card card) {
+        this.currentLeadCard = card;
+    } // New setter
+
+    public void setDealerLeadsTrick(boolean dealerLeadsTrick) {
+        this.dealerLeadsTrick = dealerLeadsTrick;
+    }
 
     public void startNewRun() {
         this.round = 1;
@@ -77,6 +108,7 @@ public class GameState {
         this.interestRate = 0.05;
         this.inventory.clear();
         this.gameOver = false;
+        this.phase1Won = false;
         this.playerLeads = false; // Keep for now, but might be removed
         this.dealerLeadsTrick = true; // Dealer starts the first trick of a new run
         this.seed = System.currentTimeMillis();
@@ -91,31 +123,141 @@ public class GameState {
     }
 
     // Other existing methods...
-    public Dealer getCurrentDealer() { return currentDealer; }
-    public void setCurrentDealer(Dealer dealer) { this.currentDealer = dealer; }
-    public int getRound() { return round; }
-    public void increaseRound() { this.round++; }
-    public void setRound(int round) { this.round = round; }
-    public int getScorePhase1() { return scorePhase1; }
-    public void setScorePhase1(int score) { this.scorePhase1 = score; }
-    public int getPlayerHealth() { return playerHealth; }
-    public void decreaseLife() { this.playerHealth--; if (this.playerHealth <= 0) { this.gameOver = true; } }
-    public void setPlayerHealth(int playerHealth) { this.playerHealth = playerHealth; }
-    public boolean isDead() { return playerHealth <= 0; }
-    public int getMoney() { return playerMoney; }
-    public void addMoney(int amount) { this.playerMoney += amount; }
-    public void setMoney(int amount) { this.playerMoney = amount; }
-    public int getDebt() { return debt; }
-    public double getInterestRate() { return interestRate; }
-    public int applyDebtInterest() { int added = Rules.calculateInterest(debt, interestRate); debt += added; return debt; }
-    public boolean payDebt(int amount) { if (playerMoney < amount) return false; playerMoney -= amount; debt -= amount; if (debt < 0) debt = 0; return true; }
-    public void setDebt(int debt) { this.debt = debt; if (this.debt < 0) { this.debt = 0; } }
-    public void setInterestRate(double interestRate) { this.interestRate = interestRate; }
-    public PlayerInventory getInventory() { return inventory; }
-    public void setInventory(PlayerInventory inventory) { this.inventory = inventory; }
-    public void addInventory(SpecialCard card) { inventory.add(card); }
-    public boolean isGameOver() { return gameOver; }
-    public void setPlayerLeads(boolean playerLeads) { this.playerLeads = playerLeads; } // Consider removing
-    public long getSeed() { return seed; }
-    public void setSeed(long seed) { this.seed = seed; }
+    public Dealer getCurrentDealer() {
+        return currentDealer;
+    }
+
+    public void setCurrentDealer(Dealer dealer) {
+        this.currentDealer = dealer;
+    }
+
+    public int getRound() {
+        return round;
+    }
+
+    public void increaseRound() {
+        this.round++;
+    }
+
+    public void setRound(int round) {
+        this.round = round;
+    }
+
+    public int getScorePhase1() {
+        return scorePhase1;
+    }
+
+    public void setScorePhase1(int score) {
+        this.scorePhase1 = score;
+    }
+
+    public int getPlayerHealth() {
+        return playerHealth;
+    }
+
+    public void decreaseLife() {
+        this.playerHealth--;
+        if (this.playerHealth <= 0) {
+            this.gameOver = true;
+        }
+    }
+
+    public void setPlayerHealth(int playerHealth) {
+        this.playerHealth = playerHealth;
+    }
+
+    public boolean isDead() {
+        return playerHealth <= 0;
+    }
+
+    public int getMoney() {
+        return playerMoney;
+    }
+
+    public void addMoney(int amount) {
+        this.playerMoney += amount;
+    }
+
+    public void setMoney(int amount) {
+        this.playerMoney = amount;
+    }
+
+    public int getDebt() {
+        return debt;
+    }
+
+    public double getInterestRate() {
+        return interestRate;
+    }
+
+    public int applyDebtInterest() {
+        int added = Rules.calculateInterest(debt, interestRate);
+        debt += added;
+        return debt;
+    }
+
+    public boolean payDebt(int amount) {
+        if (playerMoney < amount)
+            return false;
+        playerMoney -= amount;
+        debt -= amount;
+        if (debt < 0)
+            debt = 0;
+        return true;
+    }
+
+    public void setDebt(int debt) {
+        this.debt = debt;
+        if (this.debt < 0) {
+            this.debt = 0;
+        }
+    }
+
+    public void setInterestRate(double interestRate) {
+        this.interestRate = interestRate;
+    }
+
+    public PlayerInventory getInventory() {
+        return inventory;
+    }
+
+    public PlayerInventory getPlayerInventory() {
+        return inventory;
+    }
+
+    public void setInventory(PlayerInventory inventory) {
+        this.inventory = inventory;
+    }
+
+    public void addInventory(SpecialCard card) {
+        inventory.add(card);
+    }
+
+    public void decreaseMoney(int amount) {
+        this.playerMoney -= amount;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public void setPlayerLeads(boolean playerLeads) {
+        this.playerLeads = playerLeads;
+    } // Consider removing
+
+    public boolean isPhase1Won() {
+        return phase1Won;
+    }
+
+    public void setPhase1Won(boolean phase1Won) {
+        this.phase1Won = phase1Won;
+    }
+
+    public long getSeed() {
+        return seed;
+    }
+
+    public void setSeed(long seed) {
+        this.seed = seed;
+    }
 }

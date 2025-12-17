@@ -18,7 +18,9 @@ public class EconomistBoss extends BossDealer {
 
     @Override
     public int bid(SpecialCard biddingItem, int round) {
-        return 1;
+        int base = biddingItem.getPrice();
+        int max = 120;
+        return Math.min(max, base + new Random().nextInt(20));
     }
 
     @Override
@@ -39,14 +41,16 @@ public class EconomistBoss extends BossDealer {
         return trickCount >= 5;
     }
 
-    // Helper method to get effective value of player's card (considering EconomistBoss skill)
+    // Helper method to get effective value of player's card (considering
+    // EconomistBoss skill)
     private int getEffectivePlayerCardValue(Card playerCard) {
         return this.modifyPlayerCardValue(Rules.scoreCard(playerCard));
     }
 
     @Override
     public Card chooseCard(Card playerCard, List<Card> dealerHand) {
-        if (dealerHand.isEmpty()) return null;
+        if (dealerHand.isEmpty())
+            return null;
 
         // If dealer leads (playerCard is null), play the lowest card
         if (playerCard == null) {

@@ -22,7 +22,7 @@ public class SpecialCard {
 
     // CONSTRUCTOR
     public SpecialCard(int id, String name, EffectType effectType, EffectTrigger effectTrigger,
-                       int price, Rarity rarity, String description) {
+            int price, Rarity rarity, String description) {
         this.id = id;
         this.name = name;
         this.effectType = effectType;
@@ -33,7 +33,8 @@ public class SpecialCard {
     }
 
     // default constructor (untuk load DB)
-    public SpecialCard() {}
+    public SpecialCard() {
+    }
 
     // copy constructor
     public SpecialCard(SpecialCard other) {
@@ -54,7 +55,8 @@ public class SpecialCard {
     }
 
     public TrickModifier applyEffect(EffectContext ctx) {
-        if (!canActivate()) return null;
+        if (!canActivate())
+            return null;
 
         TrickModifier modifier = new TrickModifier();
         GameState gameState = ctx.getGameState();
@@ -93,7 +95,7 @@ public class SpecialCard {
                 if (ctx.getCapturedCards() != null) {
                     int pointsToAdd = 0;
                     for (Card card : ctx.getCapturedCards()) {
-                        if (card.getRank().isFaceCard()) { 
+                        if (card.getRank().isFaceCard()) {
                             pointsToAdd += 10;
                         }
                     }
@@ -102,7 +104,7 @@ public class SpecialCard {
                 break;
             case POINT_PARASITE:
                 if (gameState.getScorePhase1() > 50) {
-                   gameState.setScorePhase1((int) (gameState.getScorePhase1() * 1.3));
+                    gameState.setScorePhase1((int) (gameState.getScorePhase1() * 1.3));
                 }
                 break;
 
@@ -121,13 +123,15 @@ public class SpecialCard {
                 }
                 break;
             case SPADE_SNEAK:
-                if (ctx.getPlayerCard().getSuit() == Suit.SPADES && ctx.getPlayerCard().getValue() > ctx.getDealerCard().getValue()) {
+                if (ctx.getPlayerCard().getSuit() == Suit.SPADES
+                        && ctx.getPlayerCard().getValue() > ctx.getDealerCard().getValue()) {
                     modifier.setIgnoreSuitRule(true);
                     setCooldownStage(1);
                 }
                 break;
             case SUIT_SWAPPER:
-                if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit() && ctx.getPlayerCard().getValue() > ctx.getDealerCard().getValue()) {
+                if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit()
+                        && ctx.getPlayerCard().getValue() > ctx.getDealerCard().getValue()) {
                     modifier.setForceFollowSuit(true);
                 }
                 break;
@@ -148,7 +152,8 @@ public class SpecialCard {
                 }
                 break;
             case TRUMP_TYRANT:
-                if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit() && ctx.getPlayerCard().getValue() < ctx.getDealerCard().getValue()) {
+                if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit()
+                        && ctx.getPlayerCard().getValue() < ctx.getDealerCard().getValue()) {
                     modifier.setForceWin(true);
                     setCooldownRound(3);
                 }
@@ -162,7 +167,8 @@ public class SpecialCard {
 
             // AFTER_ROUND
             case TEN_TAKER:
-                if (ctx.isPlayerWin() && (ctx.getPlayerCard().getRank().getValue() == 10 || ctx.getDealerCard().getRank().getValue() == 10)) {
+                if (ctx.isPlayerWin() && (ctx.getPlayerCard().getRank().getValue() == 10
+                        || ctx.getDealerCard().getRank().getValue() == 10)) {
                     modifier.addPointMultiplier(1.2);
                 }
                 break;
@@ -207,16 +213,43 @@ public class SpecialCard {
     }
 
     // GETTER / SETTER
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public EffectType getEffectType() { return effectType; }
-    public EffectTrigger getEffectTrigger() { return effectTrigger; }
-    public int getPrice() { return price; }
-    public Rarity getRarity() { return rarity; }
-    public String getDescription() { return description; }
-    public boolean isAvailable() { return isAvailable; }
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public EffectType getEffectType() {
+        return effectType;
+    }
+
+    public EffectTrigger getEffectTrigger() {
+        return effectTrigger;
+    }
+
+    public int getPrice() {
+        return price;
+    }
+
+    public Rarity getRarity() {
+        return rarity;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
 
     public void setAvailable(boolean available) {
         this.isAvailable = available;
+    }
+
+    public void setRarity(Rarity rarity) {
+        this.rarity = rarity;
     }
 }

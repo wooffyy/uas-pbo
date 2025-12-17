@@ -19,7 +19,9 @@ public class TacticianBoss extends BossDealer {
 
     @Override
     public int bid(SpecialCard biddingItem, int round) {
-        return 5;
+        int base = biddingItem.getPrice();
+        int max = 60;
+        return Math.min(max, base + new Random().nextInt(15));
     }
 
     @Override
@@ -48,7 +50,8 @@ public class TacticianBoss extends BossDealer {
 
     @Override
     public Card chooseCard(Card playerCard, List<Card> dealerHand) {
-        if (dealerHand.isEmpty()) return null;
+        if (dealerHand.isEmpty())
+            return null;
 
         // If dealer leads (playerCard is null), play the lowest card
         if (playerCard == null) {
@@ -75,7 +78,8 @@ public class TacticianBoss extends BossDealer {
 
         if (!winningFollowSuitCards.isEmpty()) {
             if (isForcedCommitmentActive) {
-                // During Forced Commitment, play the lowest winning card to conserve higher cards if possible
+                // During Forced Commitment, play the lowest winning card to conserve higher
+                // cards if possible
                 return winningFollowSuitCards.stream()
                         .min(Comparator.comparingInt(this::getEffectiveDealerCardValue))
                         .orElseThrow(() -> new IllegalStateException("Should find a card if list is not empty"));

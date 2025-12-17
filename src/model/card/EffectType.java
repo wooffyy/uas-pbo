@@ -5,7 +5,6 @@ public enum EffectType {
     HEART_HARVESTER,
     SPADE_SNEAK,
     CLUB_CRUSHER,
-    DIAMOND_DEALER,
     LOW_LIFTER,
     TEN_TAKER,
     SUIT_SWAPPER,
@@ -20,4 +19,3 @@ public enum EffectType {
     DEALER_DOOM,
     INFINITE_TRICKS
 }
-

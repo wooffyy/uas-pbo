@@ -16,7 +16,6 @@ import java.util.Random;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 public class GameManager {
 
     private final GameState gameState;
@@ -25,7 +24,10 @@ public class GameManager {
     private final Phase1Game phase1;
     private final Phase2Game phase2;
 
+    private static GameManager instance;
+
     public GameManager(GameState initialState, UIWindow ui, List<SpecialCard> itemPool) {
+        instance = this;
         this.gameState = initialState;
         this.shop = new Shop(itemPool, System.currentTimeMillis());
         this.ui = ui;
@@ -36,8 +38,10 @@ public class GameManager {
     public void playCard(Card card) {
         // Player can only play if:
         // 1. No player card is currently on the table (playerPlayedCard is null)
-        // 2. It's the player's turn to lead (dealerLeadsTrick is false) OR the dealer has already played a card
-        if (gameState.getPlayerPlayedCard() != null || (gameState.isDealerLeadsTrick() && gameState.getDealerPlayedCard() == null)) {
+        // 2. It's the player's turn to lead (dealerLeadsTrick is false) OR the dealer
+        // has already played a card
+        if (gameState.getPlayerPlayedCard() != null
+                || (gameState.isDealerLeadsTrick() && gameState.getDealerPlayedCard() == null)) {
             return;
         }
 
@@ -92,7 +96,8 @@ public class GameManager {
             phase1.dealerWinsTrick(playerCard, dealerCard);
             gameState.setDealerLeadsTrick(true); // Dealer wins, dealer leads next trick
         }
-        System.out.println("Player plays " + playerCard.getName() + ", Dealer plays " + (dealerCard != null ? dealerCard.getName() : "nothing") + ". Player wins: " + playerWins);
+        System.out.println("Player plays " + playerCard.getName() + ", Dealer plays "
+                + (dealerCard != null ? dealerCard.getName() : "nothing") + ". Player wins: " + playerWins);
 
         // Clear played cards and lead card
         gameState.setPlayerPlayedCard(null);
@@ -111,7 +116,6 @@ public class GameManager {
             startTrick();
         }
     }
-
 
     public void startGame() {
         ui.switchView(UIWindow.MENU_VIEW);
@@ -145,16 +149,20 @@ public class GameManager {
 
     public void onPhase1Finish() {
         phase1.getReward();
+
+        // Award money regardless of win/loss
+        gameState.addMoney(gameState.getScorePhase1());
+
         if (phase1.isWin()) {
+            gameState.setPhase1Won(true);
             EffectContext afterStageCtx = new EffectContext(
                     gameState,
                     gameState.getRound(),
                     gameState.getScorePhase1(),
-                    phase1.getCapturedCards()
-            );
+                    phase1.getCapturedCards());
             gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
-            gameState.addMoney(gameState.getScorePhase1());
         } else {
+            gameState.setPhase1Won(false);
             gameState.decreaseLife();
             if (gameState.isDead()) {
                 gameOver();
@@ -237,10 +245,17 @@ public class GameManager {
         return switch (stage) {
             case 1 -> new Dealer("INTRO BOSS", rng) {
                 @Override
-                public int bid(SpecialCard biddingItem, int round) { return 0; }
+                public int bid(SpecialCard biddingItem, int round) {
+                    // Logic: Cap at 40, minimum base price + small random
+                    int base = biddingItem.getPrice();
+                    int max = 40;
+                    return Math.min(max, base + new Random().nextInt(10));
+                }
+
                 @Override
                 public Card chooseCard(Card playerCard, List<Card> dealerHand) {
-                    if (dealerHand.isEmpty()) return null;
+                    if (dealerHand.isEmpty())
+                        return null;
 
                     // If dealer leads (playerCard is null), play the lowest card
                     if (playerCard == null) {
@@ -293,7 +308,20 @@ public class GameManager {
         return gameState;
     }
 
+    public void startBidding() {
+        phase2.rollBiddingItem();
+        ui.switchView(UIWindow.BIDDING_VIEW);
+    }
+
+    public static GameManager getInstance() {
+        return instance;
+    }
+
     public Phase1Game getPhase1Game() {
         return phase1;
+    }
+
+    public Phase2Game getPhase2Game() {
+        return phase2;
     }
 }

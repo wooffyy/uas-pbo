@@ -1,4 +1,5 @@
 package ui;
+
 import core.GameManager;
 import java.awt.*;
 import javax.swing.*;
@@ -19,6 +20,8 @@ public class UIWindow extends JFrame {
     // View Panels
     private Phase1Panel phase1Panel;
     private Phase1ResultPanel phase1ResultPanel; // New field
+    private Phase2ShopPanel phase2Panel;
+    private BiddingPanel biddingPanel; // New field
     // other panels can be stored as fields if needed
 
     public UIWindow() {
@@ -43,8 +46,8 @@ public class UIWindow extends JFrame {
         MainMenuPanel menuPanel = new MainMenuPanel(this, gameManager);
         phase1Panel = new Phase1Panel(this, gameManager);
         phase1ResultPanel = new Phase1ResultPanel(this, gameManager); // Initialize new panel
-        Phase2ShopPanel phase2Panel = new Phase2ShopPanel(this);
-        BiddingPanel biddingPanel = new BiddingPanel(this);
+        phase2Panel = new Phase2ShopPanel(this);
+        biddingPanel = new BiddingPanel(this);
         CardCollectionPanel collectionPanel = new CardCollectionPanel(this);
 
         // ================= REGISTER VIEWS =================
@@ -68,6 +71,10 @@ public class UIWindow extends JFrame {
             phase1Panel.refresh();
         } else if (viewName.equals(PHASE1_RESULT_VIEW) && phase1ResultPanel != null) {
             phase1ResultPanel.updateResults(); // Update results when showing this panel
+        } else if (viewName.equals(PHASE2_VIEW) && phase2Panel != null) {
+            phase2Panel.refresh();
+        } else if (viewName.equals(BIDDING_VIEW) && biddingPanel != null) {
+            biddingPanel.reset();
         }
     }
 
@@ -77,5 +84,9 @@ public class UIWindow extends JFrame {
 
     public Phase1ResultPanel getPhase1ResultPanel() {
         return phase1ResultPanel;
+    }
+
+    public Phase2ShopPanel getPhase2ShopPanel() {
+        return phase2Panel;
     }
 }

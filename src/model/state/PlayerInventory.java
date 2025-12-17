@@ -19,6 +19,10 @@ public class PlayerInventory {
         cards.add(card);
     }
 
+    public void addCard(SpecialCard card) {
+        add(card);
+    }
+
     public List<SpecialCard> getCards() {
         return cards;
     }

@@ -19,7 +19,9 @@ public class FinalBossDealer extends BossDealer {
 
     @Override
     public int bid(SpecialCard biddingItem, int round) {
-        return 10;
+        int base = biddingItem.getPrice();
+        int max = 150;
+        return Math.min(max, base + new Random().nextInt(30));
     }
 
     @Override
@@ -28,8 +30,7 @@ public class FinalBossDealer extends BossDealer {
             Card bossCard,
             boolean defaultWinner,
             int playerValue,
-            int bossValue
-    ) {
+            int bossValue) {
         // Dominance aktif sejak awal
         // If boss plays the lastBossSuit, it's always considered higher
         // UNLESS player's card is much stronger (value difference >= 3)
@@ -60,7 +61,8 @@ public class FinalBossDealer extends BossDealer {
 
     @Override
     public Card chooseCard(Card playerCard, List<Card> dealerHand) {
-        if (dealerHand.isEmpty()) return null;
+        if (dealerHand.isEmpty())
+            return null;
 
         // If dealer leads (playerCard is null), play the lowest card
         if (playerCard == null) {
@@ -103,7 +105,8 @@ public class FinalBossDealer extends BossDealer {
             }
         }
 
-        // 3. If no winning Dominance card, or Dominance not applicable, fall back to standard winning logic
+        // 3. If no winning Dominance card, or Dominance not applicable, fall back to
+        // standard winning logic
         // Try to find a winning card that follows suit
         if (!followSuitCards.isEmpty()) {
             List<Card> winningFollowSuitCards = followSuitCards.stream()

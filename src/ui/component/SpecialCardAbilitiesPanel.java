@@ -2,6 +2,11 @@ package ui.component;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+
+import model.card.SpecialCard;
+import model.state.GameState;
+import ui.CardImageLoader;
+
 import java.awt.*;
 
 public class SpecialCardAbilitiesPanel extends JPanel {
@@ -20,8 +25,7 @@ public class SpecialCardAbilitiesPanel extends JPanel {
                 TitledBorder.CENTER,
                 TitledBorder.TOP,
                 new Font("Monospaced", Font.BOLD, 14),
-                TITLE_COLOR
-        ));
+                TITLE_COLOR));
 
         Dimension slotSize = new Dimension(120, 120);
 
@@ -41,5 +45,35 @@ public class SpecialCardAbilitiesPanel extends JPanel {
 
         setMaximumSize(new Dimension(400, 300));
         setAlignmentX(Component.CENTER_ALIGNMENT);
+    }
+
+    public void refresh(GameState state) {
+        removeAll();
+
+        int count = 0;
+        for (SpecialCard card : state.getPlayerInventory().getCards()) {
+            // Use resized image to fit the slot
+            JLabel img = new JLabel(CardImageLoader.loadCardResized(card.getName(), 100, 100)); // slightly smaller than
+                                                                                                // 120
+            img.setHorizontalAlignment(SwingConstants.CENTER);
+            add(img);
+            count++;
+        }
+
+        for (int i = count; i < 6; i++) {
+            JPanel empty = new JPanel(new BorderLayout());
+            empty.setBackground(SLOT_BG);
+            empty.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
+
+            JLabel placeholder = new JLabel("EMPTY", SwingConstants.CENTER);
+            placeholder.setForeground(Color.GRAY);
+            placeholder.setFont(new Font("Monospaced", Font.PLAIN, 11));
+            empty.add(placeholder, BorderLayout.CENTER);
+
+            add(empty);
+        }
+
+        revalidate();
+        repaint();
     }
 }
