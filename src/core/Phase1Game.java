@@ -15,6 +15,7 @@ public class Phase1Game {
     private final List<Card> capturedCards = new ArrayList<>();
     private final List<Card> playerTrickPile = new ArrayList<>();
     private final List<Card> dealerTrickPile = new ArrayList<>();
+    private final int targetTricks = 7; // New: Target tricks to win Phase 1
 
     public Phase1Game(GameState gameState) {
         this.gameState = gameState;
@@ -47,9 +48,9 @@ public class Phase1Game {
         if (dealerCard != null) dealerTrickPile.add(dealerCard);
     }
 
-    public boolean isWin() {
-        // Example win condition: win at least 7 tricks
-        return tricksWon >= 7;
+    public boolean isWin() { // Removed @Override annotation
+        // Win condition: win at least targetTricks
+        return tricksWon >= targetTricks;
     }
 
     public int getReward() {
@@ -70,5 +71,9 @@ public class Phase1Game {
 
     public int getTricksLost() {
         return tricksLost;
+    }
+
+    public int getTargetTricks() {
+        return targetTricks;
     }
 }

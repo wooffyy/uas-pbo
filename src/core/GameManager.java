@@ -99,8 +99,12 @@ public class GameManager {
         gameState.setDealerPlayedCard(null);
         gameState.setCurrentLeadCard(null);
 
-        // Check if round is over
-        if (gameState.getPlayerHand().isEmpty()) {
+        // Check if player has won enough tricks to finish Phase 1
+        if (phase1.isWin()) {
+            onPhase1Finish();
+        }
+        // Check if round is over (no cards left in hand)
+        else if (gameState.getPlayerHand().isEmpty()) {
             onPhase1Finish();
         } else {
             // Start next trick
