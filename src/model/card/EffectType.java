@@ -17,5 +17,6 @@ public enum EffectType {
     CASCADE_CAPTURE,
     TRUMP_TYRANT,
     DEALER_DOOM,
-    INFINITE_TRICKS
+    INFINITE_TRICKS,
+    DIAMOND_DEALER
 }

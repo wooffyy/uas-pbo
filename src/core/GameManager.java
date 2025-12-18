@@ -129,6 +129,8 @@ public class GameManager {
         // BOSS NOTIFICATIONS (ONCE PER SKILL TRIGGER)
         if (dealer.isEconomist() && currentTrickNum == 5) {
             ui.showNotification("ECONOMIST SKILL: Value Drain!\nFrom now on, your card values are reduced by 1!");
+        } else if (dealer.isFinalBoss() && currentTrickNum == 1) {
+            ui.showNotification("FINAL BOSS SKILL: Dominance!\nIf suits match, you need +3 rank difference to win!");
         }
 
         // Use the new Rules.getTrickWinner method
@@ -141,7 +143,17 @@ public class GameManager {
 
             // If player followed suit, they get money
             if (playerCard.getSuit() == gameState.getCurrentLeadCard().getSuit()) {
-                int moneyEarned = Rules.getCardValueForMoney(playerCard) + Rules.getCardValueForMoney(dealerCard);
+                // Calculate money value, considering Boss skills (e.g. Economist -1 value)
+                int playerValue = Rules.getCardValueForMoney(playerCard);
+                if (dealer != null) {
+                    playerValue = dealer.modifyPlayerCardValue(playerValue);
+                }
+
+                int moneyEarned = playerValue + Rules.getCardValueForMoney(dealerCard);
+                // Ensure non-negative money if skill reduces it too much (though max(1,...) is
+                // used in Boss)
+                moneyEarned = Math.max(0, moneyEarned);
+
                 gameState.addMoney(moneyEarned);
                 gameState.addMoneyFromTricks(moneyEarned);
             }
@@ -184,6 +196,14 @@ public class GameManager {
     }
 
     private void startTrick() {
+        // Update BossDealer trick count
+        Dealer dealer = gameState.getCurrentDealer();
+        int currentTrickNum = phase1.getTricksWon() + phase1.getTricksLost() + 1;
+
+        if (dealer instanceof model.entity.dealer.BossDealer) {
+            ((model.entity.dealer.BossDealer) dealer).onTrickStart(currentTrickNum);
+        }
+
         if (gameState.isDealerLeadsTrick()) {
             playDealerLeadCard();
         } else {

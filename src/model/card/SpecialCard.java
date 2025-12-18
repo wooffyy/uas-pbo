@@ -91,6 +91,21 @@ public class SpecialCard {
                     gameState.setScorePhase1(gameState.getScorePhase1() + pointsToAdd);
                 }
                 break;
+            case DIAMOND_DEALER:
+                if (ctx.getCapturedCards() != null) {
+                    for (Card card : ctx.getCapturedCards()) {
+                        if (card.getSuit() == Suit.DIAMONDS) {
+                            // "Diamond captured: -0,1 interest each"
+                            // Interpreting as -0.1% (0.001) to be balanced for a Common card
+                            // If taken literally as -0.1 (10%), it would be too OP.
+                            double currentRate = gameState.getInterestRate();
+                            if (currentRate > 0) {
+                                gameState.setInterestRate(Math.max(0, currentRate - 0.001));
+                            }
+                        }
+                    }
+                }
+                break;
             case HIGH_HIJACK:
                 if (ctx.getCapturedCards() != null) {
                     int pointsToAdd = 0;

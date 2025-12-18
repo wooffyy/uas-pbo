@@ -60,4 +60,8 @@ public abstract class Dealer {
     public boolean isFinalBoss() {
         return false;
     }
+
+    public int modifyPlayerCardValue(int originalValue) {
+        return originalValue;
+    }
 }
