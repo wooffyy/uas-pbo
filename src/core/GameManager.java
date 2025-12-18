@@ -204,7 +204,7 @@ public class GameManager {
         phase1.getReward();
 
         // Award money regardless of win/loss
-        gameState.addMoney(gameState.getScorePhase1());
+        // gameState.addMoney(gameState.getScorePhase1());
 
         if (phase1.isWin()) {
             gameState.setPhase1Won(true);

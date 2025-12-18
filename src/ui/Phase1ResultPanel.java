@@ -14,7 +14,6 @@ public class Phase1ResultPanel extends JPanel {
 
     private JLabel resultTitleLabel;
     private JLabel tricksWonLabel;
-    private JLabel phaseBonusLabel;
     private JLabel moneyFromTricksLabel;
     private JLabel totalMoneyLabel;
     private JLabel healthStatusLabel;
@@ -47,7 +46,6 @@ public class Phase1ResultPanel extends JPanel {
         resultsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         tricksWonLabel = createResultLabel("Tricks Won: 0", Color.WHITE);
-        phaseBonusLabel = createResultLabel("Bonus: $0", new Color(0, 200, 0));
         moneyFromTricksLabel = createResultLabel("Money from Tricks: $0", new Color(0, 200, 0));
         totalMoneyLabel = createResultLabel("Total Player Money: $0", new Color(255, 200, 0));
         healthStatusLabel = createResultLabel("Health: ♥♥♥", Color.RED);
@@ -56,7 +54,6 @@ public class Phase1ResultPanel extends JPanel {
 
         resultsPanel.add(tricksWonLabel);
         resultsPanel.add(Box.createVerticalStrut(15));
-        resultsPanel.add(phaseBonusLabel);
         resultsPanel.add(moneyFromTricksLabel);
         resultsPanel.add(totalMoneyLabel);
         resultsPanel.add(Box.createVerticalStrut(15));
@@ -98,7 +95,6 @@ public class Phase1ResultPanel extends JPanel {
         resultTitleLabel.setForeground(phase1.isWin() ? new Color(0, 200, 0) : Color.RED);
 
         tricksWonLabel.setText("Tricks Won: " + phase1.getTricksWon() + " / 13");
-        phaseBonusLabel.setText("Bonus: $" + state.getScorePhase1());
         moneyFromTricksLabel.setText("Money from Tricks: $" + state.getMoneyFromTricks());
         totalMoneyLabel.setText("Total Player Money: $" + state.getMoney());
         healthStatusLabel.setText("Health: " + "♥".repeat(Math.max(0, state.getPlayerHealth())));

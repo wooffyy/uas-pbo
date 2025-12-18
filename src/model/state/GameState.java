@@ -106,7 +106,7 @@ public class GameState {
         this.scorePhase1 = 0;
         this.playerHealth = 3;
         this.playerMoney = 0;
-        this.debt = 10000;
+        this.debt = 1000;
         this.interestRate = 0.001;
         this.inventory.clear();
         this.gameOver = false;
