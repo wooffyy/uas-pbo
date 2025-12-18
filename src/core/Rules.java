@@ -35,27 +35,16 @@ public final class Rules {
             return false; // Dealer wins because player did not follow suit
         }
         // Case 4: Neither follows suit (both "slough" or "discard")
-        // In this simplified rule, if neither follows suit, the lead card's player wins.
-        // However, since we are comparing playerCard and dealerCard, and neither followed suit,
-        // the winner is determined by who played the lead card.
-        // For simplicity, if neither follows suit, the one who played the highest card of any suit wins.
-        // But a more common rule is that the lead player wins if no one follows suit and no trump.
-        // Let's assume for now that if neither follows suit, the one who played the highest card overall wins.
-        // This needs clarification if a specific rule is desired.
-        // For now, let's say the lead player (who played leadCard) wins if no one follows suit.
-        // This implies the leadCard is either playerCard or dealerCard.
-        // If playerCard was leadCard, player wins. If dealerCard was leadCard, dealer wins.
-        // Since leadCard is always the first card played, we need to know who played it.
-        // Let's simplify: if neither follows suit, the one who played the highest card overall wins.
-        // This is a common simplified rule for non-trump games when no one follows suit.
-        if (playerCard != null && dealerCard != null) {
-            return playerCard.getRank().getValue() > dealerCard.getRank().getValue();
-        } else if (playerCard != null) { // Only player played (dealer passed or error)
-            return true;
-        } else if (dealerCard != null) { // Only dealer played (player passed or error)
-            return false;
+        // The player who led the trick wins.
+        // We can determine the leader by checking if the player's card is the lead card.
+        return playerCard == leadCard;
+    }
+
+    public static int getCardValueForMoney(Card card) {
+        if (card == null) {
+            return 0;
         }
-        return false; // Should not happen in a normal trick
+        return card.getRank().getValueForMoney();
     }
 
     public static int scoreCard(Card card){

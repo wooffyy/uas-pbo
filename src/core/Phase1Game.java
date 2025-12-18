@@ -53,6 +53,10 @@ public class Phase1Game {
         return tricksWon >= targetTricks;
     }
 
+    public boolean isLoss() {
+        return tricksLost >= targetTricks;
+    }
+
     public int getReward() {
         // Example reward: 100 points for each trick won
         totalPoints = tricksWon * 100;

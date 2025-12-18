@@ -26,6 +26,7 @@ public class GameState {
     // Progression
     private int round;
     private int scorePhase1;
+    private int moneyFromTricks;
 
     // Player Status
     private int playerHealth;
@@ -34,6 +35,7 @@ public class GameState {
     // Economy
     private int debt;
     private double interestRate;
+    private int lastInterestAdded;
 
     // Inventory
     private PlayerInventory inventory;
@@ -105,13 +107,14 @@ public class GameState {
         this.playerHealth = 3;
         this.playerMoney = 0;
         this.debt = 10000;
-        this.interestRate = 0.05;
+        this.interestRate = 0.001;
         this.inventory.clear();
         this.gameOver = false;
         this.phase1Won = false;
         this.playerLeads = false; // Keep for now, but might be removed
         this.dealerLeadsTrick = true; // Dealer starts the first trick of a new run
         this.seed = System.currentTimeMillis();
+        this.moneyFromTricks = 0;
 
         // Clear hands and deck for the new run
         deck.clear();
@@ -192,6 +195,7 @@ public class GameState {
 
     public int applyDebtInterest() {
         int added = Rules.calculateInterest(debt, interestRate);
+        this.lastInterestAdded = added;
         debt += added;
         return debt;
     }
@@ -259,5 +263,25 @@ public class GameState {
 
     public void setSeed(long seed) {
         this.seed = seed;
+    }
+    
+    public int getLastInterestAdded() {
+        return lastInterestAdded;
+    }
+
+    public void setLastInterestAdded(int lastInterestAdded) {
+        this.lastInterestAdded = lastInterestAdded;
+    }
+
+    public int getMoneyFromTricks() {
+        return moneyFromTricks;
+    }
+
+    public void addMoneyFromTricks(int amount) {
+        this.moneyFromTricks += amount;
+    }
+
+    public void resetMoneyFromTricks() {
+        this.moneyFromTricks = 0;
     }
 }

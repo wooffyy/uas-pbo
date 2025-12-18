@@ -14,8 +14,11 @@ public class Phase1ResultPanel extends JPanel {
 
     private JLabel resultTitleLabel;
     private JLabel tricksWonLabel;
-    private JLabel moneyEarnedLabel;
+    private JLabel phaseBonusLabel;
+    private JLabel moneyFromTricksLabel;
+    private JLabel totalMoneyLabel;
     private JLabel healthStatusLabel;
+    private JLabel debtInterestLabel;
     private JLabel debtStatusLabel;
     private JButton continueButton;
 
@@ -44,16 +47,23 @@ public class Phase1ResultPanel extends JPanel {
         resultsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         tricksWonLabel = createResultLabel("Tricks Won: 0", Color.WHITE);
-        moneyEarnedLabel = createResultLabel("Money Earned: $0", new Color(0, 200, 0));
+        phaseBonusLabel = createResultLabel("Phase Bonus: $0", new Color(0, 200, 0));
+        moneyFromTricksLabel = createResultLabel("Money from Tricks: $0", new Color(0, 200, 0));
+        totalMoneyLabel = createResultLabel("Total Player Money: $0", new Color(255, 200, 0));
         healthStatusLabel = createResultLabel("Health: ♥♥♥", Color.RED);
-        debtStatusLabel = createResultLabel("Total Debt: $0", Color.ORANGE);
+        debtInterestLabel = createResultLabel("Debt from Interest: $0", Color.ORANGE);
+        debtStatusLabel = createResultLabel("New Total Debt: $0", Color.ORANGE);
 
         resultsPanel.add(tricksWonLabel);
         resultsPanel.add(Box.createVerticalStrut(15));
-        resultsPanel.add(moneyEarnedLabel);
+        resultsPanel.add(phaseBonusLabel);
+        resultsPanel.add(moneyFromTricksLabel);
+        resultsPanel.add(totalMoneyLabel);
         resultsPanel.add(Box.createVerticalStrut(15));
         resultsPanel.add(healthStatusLabel);
         resultsPanel.add(Box.createVerticalStrut(15));
+        resultsPanel.add(debtInterestLabel);
+        resultsPanel.add(Box.createVerticalStrut(5));
         resultsPanel.add(debtStatusLabel);
 
         add(resultsPanel, BorderLayout.CENTER);
@@ -88,10 +98,14 @@ public class Phase1ResultPanel extends JPanel {
         resultTitleLabel.setForeground(phase1.isWin() ? new Color(0, 200, 0) : Color.RED);
 
         tricksWonLabel.setText("Tricks Won: " + phase1.getTricksWon() + " / 13");
-        moneyEarnedLabel.setText("Money Earned: $" + state.getScorePhase1()); // ScorePhase1 is the money earned
+        phaseBonusLabel.setText("Phase Bonus: $" + state.getScorePhase1());
+        moneyFromTricksLabel.setText("Money from Tricks: $" + state.getMoneyFromTricks());
+        totalMoneyLabel.setText("Total Player Money: $" + state.getMoney());
         healthStatusLabel.setText("Health: " + "♥".repeat(Math.max(0, state.getPlayerHealth())));
         healthStatusLabel.setForeground(state.getPlayerHealth() > 1 ? Color.GREEN : Color.RED);
-        debtStatusLabel.setText("Total Debt: $" + state.getDebt());
+        
+        debtInterestLabel.setText("Debt from Interest: $" + state.getLastInterestAdded());
+        debtStatusLabel.setText("New Total Debt: $" + state.getDebt());
         
         if (state.isDead()) {
             continueButton.setText("GAME OVER - BACK TO MENU");

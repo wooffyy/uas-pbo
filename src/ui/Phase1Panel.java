@@ -3,7 +3,9 @@ package ui;
 import core.GameManager;
 import core.Phase1Game;
 import model.card.Card;
+import model.card.SpecialCard;
 import model.state.GameState;
+import model.state.PlayerInventory;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -13,6 +15,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class Phase1Panel extends JPanel {
@@ -34,9 +37,9 @@ public class Phase1Panel extends JPanel {
     private JLabel moneyLabel;
     private JLabel debtLabel;
     private JLabel targetLabel;
+    private JLabel interestRateValueLabel;
     private JLabel bossNameLabel;
-    private JTextArea specialCardDescription = new JTextArea(); // Initialize here
-    private JLabel specialCardLabel;
+    private JLabel[] specialCardLabels;
 
     public Phase1Panel(UIWindow parentFrame, GameManager gameManager) {
         this.gameManager = gameManager;
@@ -63,6 +66,10 @@ public class Phase1Panel extends JPanel {
         moneyLabel.setText("$" + state.getMoney());
         debtLabel.setText("$" + state.getDebt());
         targetLabel.setText((tricksToWin - phase1.getTricksWon()) + " TRICKS TO WIN");
+
+        DecimalFormat df = new DecimalFormat("0.0#");
+        interestRateValueLabel.setText(df.format(state.getInterestRate() * 100) + "%");
+
 
         if (state.getCurrentDealer() != null) {
             bossNameLabel.setText(state.getCurrentDealer().getName());
@@ -91,6 +98,7 @@ public class Phase1Panel extends JPanel {
         playerTrickPileLabel.setText("PLAYER PILE : " + phase1.getTricksWon() + " TRICKS WIN");
         dealerTrickPileLabel.setText("DEALER PILE : " + phase1.getTricksLost() + " TRICKS WIN");
 
+        updateSpecialCardSlots();
 
         playerHandArea.revalidate();
         playerHandArea.repaint();
@@ -103,6 +111,22 @@ public class Phase1Panel extends JPanel {
         playerTrickPileLabel.repaint();
         dealerTrickPileLabel.revalidate();
         dealerTrickPileLabel.repaint();
+    }
+
+    private void updateSpecialCardSlots() {
+        PlayerInventory inventory = gameManager.getGameState().getPlayerInventory();
+        List<SpecialCard> cards = inventory.getCards();
+
+        for (int i = 0; i < specialCardLabels.length; i++) {
+            if (i < cards.size()) {
+                SpecialCard card = cards.get(i);
+                ImageIcon icon = CardImageLoader.loadCardImage(card);
+                Image image = icon.getImage().getScaledInstance(80, 120, Image.SCALE_SMOOTH);
+                specialCardLabels[i].setIcon(new ImageIcon(image));
+            } else {
+                specialCardLabels[i].setIcon(null);
+            }
+        }
     }
 
     private JPanel createInfoPanel(UIWindow parentFrame) {
@@ -137,6 +161,11 @@ public class Phase1Panel extends JPanel {
         panel.add(fixAlign(createLabel("TARGET", Color.RED)));
         targetLabel = createValueLabel("7 TRICKS", Color.YELLOW);
         panel.add(fixAlign(targetLabel));
+        panel.add(Box.createVerticalStrut(10));
+
+        panel.add(fixAlign(createLabel("INTEREST RATE", Color.RED)));
+        interestRateValueLabel = createValueLabel("0.1%", Color.YELLOW);
+        panel.add(fixAlign(interestRateValueLabel));
         panel.add(Box.createVerticalStrut(10));
 
         panel.add(fixAlign(createLabel("TOTAL DEBT", Color.RED)));
@@ -293,37 +322,28 @@ public class Phase1Panel extends JPanel {
     }
 
     private JPanel createSpecialCardSlot() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout()); // Main container for special card area
         panel.setBackground(INFO_BG);
         panel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.GRAY.darker()),
-                "SPECIAL CARD (ACTIVE)", TitledBorder.CENTER, TitledBorder.TOP,
+                "SPECIAL CARDS", TitledBorder.CENTER, TitledBorder.TOP,
                 new Font("Monospaced", Font.BOLD, 14), Color.ORANGE));
 
-        specialCardLabel = new JLabel();
-        specialCardLabel.setPreferredSize(new Dimension(80, 120));
-        specialCardLabel.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        // Grid for the 6 card slots
+        JPanel cardGrid = new JPanel(new GridLayout(2, 3, 5, 5)); // 2 rows, 3 columns, with gaps
+        cardGrid.setOpaque(false);
+        specialCardLabels = new JLabel[6];
 
-        JPanel cardWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        cardWrapper.setOpaque(false);
-        cardWrapper.add(specialCardLabel);
-        panel.add(cardWrapper, BorderLayout.WEST);
+        for (int i = 0; i < 6; i++) {
+            specialCardLabels[i] = new JLabel();
+            specialCardLabels[i].setPreferredSize(new Dimension(80, 120)); // Keep original card dimensions
+            specialCardLabels[i].setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
+            specialCardLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
+            cardGrid.add(specialCardLabels[i]);
+        }
 
-        specialCardDescription.setText("No special card active.");
-        specialCardDescription.setWrapStyleWord(true);
-        specialCardDescription.setLineWrap(true);
-        specialCardDescription.setEditable(false);
-        specialCardDescription.setBackground(new Color(40, 40, 40));
-        specialCardDescription.setForeground(Color.LIGHT_GRAY);
-        specialCardDescription.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        specialCardDescription.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        JScrollPane descScrollPane = new JScrollPane(specialCardDescription);
-        descScrollPane.setPreferredSize(new Dimension(150, 120));
-        descScrollPane.setBorder(BorderFactory.createLineBorder(new Color(70, 70, 70)));
-        panel.add(descScrollPane, BorderLayout.CENTER);
-
-        panel.setMaximumSize(new Dimension(400, 200));
+        panel.add(cardGrid, BorderLayout.CENTER);
+        panel.setMaximumSize(new Dimension(280, 300)); // Adjusted size
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         return panel;
     }

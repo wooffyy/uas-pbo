@@ -6,6 +6,7 @@ import java.net.URL;
 import javax.swing.*;
 import model.card.Card;
 import model.card.Rank;
+import model.card.SpecialCard;
 import model.card.Suit;
 
 public class CardImageLoader {
@@ -27,6 +28,13 @@ public class CardImageLoader {
             return createPlaceholderImage(imageFileName);
         }
         return new ImageIcon(imageUrl);
+    }
+    
+    public static ImageIcon loadCardImage(SpecialCard card) {
+        if (card == null) {
+            return createPlaceholderImage("No Card");
+        }
+        return loadCard(card.getName());
     }
 
     private static String getCardImageFilename(Suit suit, Rank rank) {

@@ -92,6 +92,13 @@ public class GameManager {
         if (playerWins) {
             phase1.playerWinsTrick(playerCard, dealerCard);
             gameState.setDealerLeadsTrick(false); // Player wins, player leads next trick
+
+            // If player followed suit, they get money
+            if (playerCard.getSuit() == gameState.getCurrentLeadCard().getSuit()) {
+                int moneyEarned = Rules.getCardValueForMoney(playerCard) + Rules.getCardValueForMoney(dealerCard);
+                gameState.addMoney(moneyEarned);
+                gameState.addMoneyFromTricks(moneyEarned);
+            }
         } else {
             phase1.dealerWinsTrick(playerCard, dealerCard);
             gameState.setDealerLeadsTrick(true); // Dealer wins, dealer leads next trick
@@ -104,8 +111,8 @@ public class GameManager {
         gameState.setDealerPlayedCard(null);
         gameState.setCurrentLeadCard(null);
 
-        // Check if player has won enough tricks to finish Phase 1
-        if (phase1.isWin()) {
+        // Check for win/loss conditions
+        if (phase1.isWin() || phase1.isLoss()) {
             onPhase1Finish();
         }
         // Check if round is over (no cards left in hand)
@@ -169,6 +176,10 @@ public class GameManager {
                 return;
             }
         }
+        
+        // Apply interest before showing results
+        gameState.applyDebtInterest();
+        
         // Instead of proceeding to debt payment, show the result panel
         ui.switchView(UIWindow.PHASE1_RESULT_VIEW);
         ui.getPhase1ResultPanel().updateResults();
@@ -184,7 +195,6 @@ public class GameManager {
     }
 
     private void proceedDebtPayment() {
-        gameState.applyDebtInterest();
         startPhase2();
     }
 
@@ -215,6 +225,7 @@ public class GameManager {
         gameState.setDealerPlayedCard(null);
         gameState.setCurrentLeadCard(null); // Reset lead card
         phase1.reset();
+        gameState.resetMoneyFromTricks();
 
         for (Suit suit : Suit.values()) {
             for (Rank rank : Rank.values()) {
@@ -301,7 +312,7 @@ public class GameManager {
     }
 
     private void gameOver() {
-        ui.switchView(UIWindow.MENU_VIEW);
+        ui.switchView(UIWindow.GAME_OVER_VIEW);
     }
 
     public GameState getGameState() {
@@ -312,6 +323,7 @@ public class GameManager {
         phase2.rollBiddingItem();
         ui.switchView(UIWindow.BIDDING_VIEW);
     }
+
 
     public static GameManager getInstance() {
         return instance;

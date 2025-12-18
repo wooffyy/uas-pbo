@@ -12,6 +12,7 @@ public class UIWindow extends JFrame {
     public static final String PHASE2_VIEW = "Phase2View";
     public static final String BIDDING_VIEW = "BiddingView";
     public static final String CARD_COLLECTION_VIEW = "CardCollectionView";
+    public static final String GAME_OVER_VIEW = "GameOverView";
 
     private final CardLayout cardLayout;
     private final JPanel mainPanel;
@@ -22,6 +23,7 @@ public class UIWindow extends JFrame {
     private Phase1ResultPanel phase1ResultPanel; // New field
     private Phase2ShopPanel phase2Panel;
     private BiddingPanel biddingPanel; // New field
+    private GameOverPanel gameOverPanel;
     // other panels can be stored as fields if needed
 
     public UIWindow() {
@@ -49,6 +51,7 @@ public class UIWindow extends JFrame {
         phase2Panel = new Phase2ShopPanel(this);
         biddingPanel = new BiddingPanel(this);
         CardCollectionPanel collectionPanel = new CardCollectionPanel(this);
+        gameOverPanel = new GameOverPanel(this, gameManager);
 
         // ================= REGISTER VIEWS =================
         mainPanel.add(menuPanel, MENU_VIEW);
@@ -57,6 +60,7 @@ public class UIWindow extends JFrame {
         mainPanel.add(phase2Panel, PHASE2_VIEW);
         mainPanel.add(biddingPanel, BIDDING_VIEW);
         mainPanel.add(collectionPanel, CARD_COLLECTION_VIEW);
+        mainPanel.add(gameOverPanel, GAME_OVER_VIEW);
 
         // ================= FINAL SETUP =================
         cardLayout.show(mainPanel, MENU_VIEW);
@@ -75,6 +79,8 @@ public class UIWindow extends JFrame {
             phase2Panel.refresh();
         } else if (viewName.equals(BIDDING_VIEW) && biddingPanel != null) {
             biddingPanel.reset();
+        } else if (viewName.equals(GAME_OVER_VIEW) && gameOverPanel != null) {
+            gameOverPanel.updateSummary();
         }
     }
 
@@ -88,5 +94,9 @@ public class UIWindow extends JFrame {
 
     public Phase2ShopPanel getPhase2ShopPanel() {
         return phase2Panel;
+    }
+
+    public GameOverPanel getGameOverPanel() {
+        return gameOverPanel;
     }
 }

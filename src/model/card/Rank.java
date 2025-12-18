@@ -14,6 +14,14 @@ public enum Rank {
         return value;
     }
 
+    public int getValueForMoney() {
+        return switch (this) {
+            case ACE -> 11;
+            case KING, QUEEN, JACK -> 10;
+            default -> this.value;
+        };
+    }
+
     public boolean isFaceCard() {
         return this == JACK || this == QUEEN || this == KING;
     }
