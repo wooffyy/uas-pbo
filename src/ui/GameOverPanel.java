@@ -1,10 +1,12 @@
 package ui;
 
 import core.GameManager;
+import model.card.SpecialCard;
 import model.state.GameState;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.stream.Collectors;
 
 public class GameOverPanel extends JPanel {
 
@@ -14,6 +16,7 @@ public class GameOverPanel extends JPanel {
     private JLabel roundsSurvivedLabel;
     private JLabel finalMoneyLabel;
     private JLabel finalDebtLabel;
+    private JTextArea collectedCardsArea;
 
     public GameOverPanel(UIWindow parentFrame, GameManager gameManager) {
         this.parentFrame = parentFrame;
@@ -47,6 +50,23 @@ public class GameOverPanel extends JPanel {
         summaryPanel.add(finalMoneyLabel);
         summaryPanel.add(Box.createVerticalStrut(20));
         summaryPanel.add(finalDebtLabel);
+        summaryPanel.add(Box.createVerticalStrut(20));
+
+        JLabel collectedCardsTitle = createSummaryLabel("Collected Special Cards:", Color.WHITE);
+        summaryPanel.add(collectedCardsTitle);
+        summaryPanel.add(Box.createVerticalStrut(10));
+
+        collectedCardsArea = new JTextArea();
+        collectedCardsArea.setEditable(false);
+        collectedCardsArea.setOpaque(false);
+        collectedCardsArea.setForeground(Color.LIGHT_GRAY);
+        collectedCardsArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        JScrollPane scrollPane = new JScrollPane(collectedCardsArea);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+        summaryPanel.add(scrollPane);
+
 
         add(summaryPanel, BorderLayout.CENTER);
 
@@ -74,5 +94,13 @@ public class GameOverPanel extends JPanel {
         roundsSurvivedLabel.setText("Rounds Survived: " + state.getRound());
         finalMoneyLabel.setText("Final Money: $" + state.getMoney());
         finalDebtLabel.setText("Final Debt: $" + state.getDebt());
+
+        String collectedCards = state.getPlayerInventory().getCards().stream()
+                .map(SpecialCard::getName)
+                .collect(Collectors.joining("\n"));
+        if (collectedCards.isEmpty()) {
+            collectedCards = "None";
+        }
+        collectedCardsArea.setText(collectedCards);
     }
 }
