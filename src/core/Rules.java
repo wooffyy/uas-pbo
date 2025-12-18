@@ -84,8 +84,8 @@ public final class Rules {
         };
     }
 
-    public static int calculateInterest(int debt, double rate) {
-        return (int) Math.ceil(debt * rate);
+    public static double calculateInterest(double debt, double rate) {
+        return debt * rate;
     }
 
 }

@@ -6,6 +6,7 @@ import model.state.GameState;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.DecimalFormat;
 
 public class Phase1ResultPanel extends JPanel {
 
@@ -90,6 +91,7 @@ public class Phase1ResultPanel extends JPanel {
     public void updateResults() {
         GameState state = gameManager.getGameState();
         Phase1Game phase1 = gameManager.getPhase1Game();
+        DecimalFormat df = new DecimalFormat("#.##");
 
         resultTitleLabel.setText(phase1.isWin() ? "YOU WIN!" : "YOU LOSE!");
         resultTitleLabel.setForeground(phase1.isWin() ? new Color(0, 200, 0) : Color.RED);
@@ -100,8 +102,8 @@ public class Phase1ResultPanel extends JPanel {
         healthStatusLabel.setText("Health: " + "♥".repeat(Math.max(0, state.getPlayerHealth())));
         healthStatusLabel.setForeground(state.getPlayerHealth() > 1 ? Color.GREEN : Color.RED);
         
-        debtInterestLabel.setText("Debt from Interest: $" + state.getLastInterestAdded());
-        debtStatusLabel.setText("New Total Debt: $" + state.getDebt());
+        debtInterestLabel.setText("Debt from Interest: $" + df.format(state.getLastInterestAdded()));
+        debtStatusLabel.setText("New Total Debt: $" + df.format(state.getDebt()));
         
         if (state.isDead()) {
             continueButton.setText("GAME OVER - BACK TO MENU");

@@ -33,9 +33,9 @@ public class GameState {
     private int playerMoney;
 
     // Economy
-    private int debt;
+    private double debt;
     private double interestRate;
-    private int lastInterestAdded;
+    private double lastInterestAdded;
 
     // Inventory
     private PlayerInventory inventory;
@@ -185,7 +185,7 @@ public class GameState {
         this.playerMoney = amount;
     }
 
-    public int getDebt() {
+    public double getDebt() {
         return debt;
     }
 
@@ -193,8 +193,8 @@ public class GameState {
         return interestRate;
     }
 
-    public int applyDebtInterest() {
-        int added = Rules.calculateInterest(debt, interestRate);
+    public double applyDebtInterest() {
+        double added = Rules.calculateInterest(debt, interestRate);
         this.lastInterestAdded = added;
         debt += added;
         return debt;
@@ -210,7 +210,7 @@ public class GameState {
         return true;
     }
 
-    public void setDebt(int debt) {
+    public void setDebt(double debt) {
         this.debt = debt;
         if (this.debt < 0) {
             this.debt = 0;
@@ -265,11 +265,11 @@ public class GameState {
         this.seed = seed;
     }
     
-    public int getLastInterestAdded() {
+    public double getLastInterestAdded() {
         return lastInterestAdded;
     }
 
-    public void setLastInterestAdded(int lastInterestAdded) {
+    public void setLastInterestAdded(double lastInterestAdded) {
         this.lastInterestAdded = lastInterestAdded;
     }
 

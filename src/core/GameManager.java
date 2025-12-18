@@ -252,6 +252,8 @@ public class GameManager {
 
     public void onPhase2Finish() {
         gameState.increaseRound();
+        double currentInterestRate = gameState.getInterestRate();
+        gameState.setInterestRate(currentInterestRate + 0.001);
         setDealerForCurrentStage();
         setupNewRound();
         phase1.start();
