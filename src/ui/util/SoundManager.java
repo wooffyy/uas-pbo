@@ -13,10 +13,13 @@ public class SoundManager {
     private Clip currentClip;
     private String currentTrack;
     private final Map<String, String> trackMap;
+    private final Map<String, Clip> clipCache; // Cache for preloaded clips
     private static final String BGM_PATH = "src/ui/BGM/";
 
     public SoundManager() {
         trackMap = new HashMap<>();
+        clipCache = new HashMap<>();
+
         // Map logical names to filenames (WAV)
         trackMap.put("MainMenu", "MainMenu.wav");
         trackMap.put("IntroBoss", "IntroBoss.wav");
@@ -34,6 +37,53 @@ public class SoundManager {
         return instance;
     }
 
+    /**
+     * Preloads all BGM tracks into memory to reduce latency.
+     * Call this during initial loading.
+     */
+    public void preloadAll() {
+        for (String track : trackMap.keySet()) {
+            loadClip(track);
+        }
+    }
+
+    private Clip loadClip(String trackName) {
+        if (clipCache.containsKey(trackName)) {
+            return clipCache.get(trackName);
+        }
+
+        String filename = trackMap.get(trackName);
+        if (filename == null)
+            return null;
+
+        try {
+            AudioInputStream audioIn = null;
+            File soundFile = new File(BGM_PATH + filename);
+
+            if (soundFile.exists()) {
+                audioIn = AudioSystem.getAudioInputStream(soundFile);
+            } else {
+                URL url = getClass().getResource("/ui/BGM/" + filename);
+                if (url == null)
+                    url = getClass().getResource("/" + filename);
+                if (url != null) {
+                    audioIn = AudioSystem.getAudioInputStream(url);
+                }
+            }
+
+            if (audioIn != null) {
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioIn);
+                clipCache.put(trackName, clip);
+                return clip;
+            }
+        } catch (Exception e) {
+            System.err.println("SoundManager: Failed to preload " + trackName);
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void play(String trackName) {
         // If requesting the same track that is already playing, do nothing
         if (trackName.equals(currentTrack) && currentClip != null && currentClip.isRunning()) {
@@ -42,45 +92,20 @@ public class SoundManager {
 
         stop(); // Stop current music
 
-        String filename = trackMap.get(trackName);
-        if (filename == null) {
-            System.err.println("SoundManager: Unknown track " + trackName);
-            return;
+        Clip clip = clipCache.get(trackName);
+        if (clip == null) {
+            // Try loading on demand if not cached
+            clip = loadClip(trackName);
         }
 
-        try {
-            // Try explicit path first (since valid in IDE)
-            File soundFile = new File(BGM_PATH + filename);
-            AudioInputStream audioIn;
-
-            if (soundFile.exists()) {
-                audioIn = AudioSystem.getAudioInputStream(soundFile);
-            } else {
-                // Fallback to classpath resource (if packaged)
-                URL url = getClass().getResource("/ui/BGM/" + filename);
-                if (url == null) {
-                    // Try root classpath
-                    url = getClass().getResource("/" + filename);
-                }
-                if (url == null) {
-                    System.err.println("SoundManager: File not found " + filename);
-                    return;
-                }
-                audioIn = AudioSystem.getAudioInputStream(url);
-            }
-
-            currentClip = AudioSystem.getClip();
-            currentClip.open(audioIn);
-
-            // Loop continuously
+        if (clip != null) {
+            currentClip = clip;
+            currentClip.setFramePosition(0); // Rewind
             currentClip.loop(Clip.LOOP_CONTINUOUSLY);
             currentClip.start();
-
             currentTrack = trackName;
-
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            e.printStackTrace();
-            System.err.println("SoundManager: Error playing " + filename);
+        } else {
+            System.err.println("SoundManager: Could not play " + trackName);
         }
     }
 
@@ -89,7 +114,7 @@ public class SoundManager {
             if (currentClip.isRunning()) {
                 currentClip.stop();
             }
-            currentClip.close();
+            // Do NOT close the clip, keep it open for reuse
             currentClip = null;
             currentTrack = null;
         }

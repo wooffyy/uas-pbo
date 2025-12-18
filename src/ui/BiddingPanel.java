@@ -210,8 +210,8 @@ public class BiddingPanel extends JPanel {
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
         controls.setOpaque(false);
 
-        JButton minus = new JButton("◀"); // Triangle pointing left
-        styleControlIcon(minus);
+        // LEFT TRIANGLE with -
+        JButton minus = new TriangleButton(false, "-");
         minus.addActionListener(e -> adjustBid(-10));
 
         // Value Layout - now using JTextField
@@ -260,8 +260,8 @@ public class BiddingPanel extends JPanel {
         valuePanel.add(bidValueField, BorderLayout.CENTER);
         valuePanel.add(line, BorderLayout.SOUTH);
 
-        JButton plus = new JButton("▶"); // Triangle pointing right
-        styleControlIcon(plus);
+        // RIGHT TRIANGLE with +
+        JButton plus = new TriangleButton(true, "+");
         plus.addActionListener(e -> adjustBid(10));
 
         controls.add(minus);
@@ -424,37 +424,58 @@ public class BiddingPanel extends JPanel {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setPreferredSize(new Dimension(280, 0));
-        sidebar.setBackground(PANEL_GRAY);
+        sidebar.setBackground(new Color(30, 30, 30)); // Match Phase1
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
         JLabel title = new JLabel("BIDDING ARENA");
-        title.setFont(new Font("Monospaced", Font.BOLD, 26)); // Fixed duplicate fonts
+        title.setFont(new Font("Monospaced", Font.BOLD, 24));
         title.setForeground(Color.WHITE);
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(title);
 
         sidebar.add(Box.createVerticalStrut(20));
 
-        debtLabel = new JLabel("$" + GameManager.getInstance().getGameState().getDebt(), SwingConstants.RIGHT);
-        debtLabel.setForeground(ACCENT_YELLOW);
-        sidebar.add(infoBox("TOTAL DEBT", debtLabel));
+        // INTEREST RATE
+        sidebar.add(fixAlign(createLabel("INTEREST RATE", Color.RED)));
+        interestLabel = createValueLabel((int) (GameManager.getInstance().getGameState().getInterestRate() * 100) + "%",
+                ACCENT_YELLOW);
+        sidebar.add(fixAlign(interestLabel));
+        sidebar.add(Box.createVerticalStrut(10));
 
-        interestLabel = new JLabel((int) (GameManager.getInstance().getGameState().getInterestRate() * 100) + "%",
-                SwingConstants.RIGHT);
-        interestLabel.setForeground(ACCENT_YELLOW);
-        sidebar.add(infoBox("INTEREST RATE", interestLabel));
+        // TOTAL DEBT
+        sidebar.add(fixAlign(createLabel("TOTAL DEBT", Color.RED)));
+        debtLabel = createValueLabel("$" + GameManager.getInstance().getGameState().getDebt(), ACCENT_YELLOW);
+        sidebar.add(fixAlign(debtLabel));
+        sidebar.add(Box.createVerticalStrut(5));
 
-        moneyLabel = new JLabel("$" + GameManager.getInstance().getGameState().getMoney(), SwingConstants.RIGHT);
-        moneyLabel.setForeground(ACCENT_YELLOW);
-        sidebar.add(infoBox("PLAYER MONEY", moneyLabel));
+        // LAST INTEREST (Added for consistency)
+        double added = GameManager.getInstance().getGameState().getLastInterestAdded();
+        JLabel interestAmountLabel = new JLabel("(+$" + String.format("%.1f", added) + ")", SwingConstants.LEFT);
+        interestAmountLabel.setForeground(new Color(255, 100, 100));
+        interestAmountLabel.setFont(new Font("Monospaced", Font.ITALIC, 11));
+        interestAmountLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        interestAmountLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(fixAlign(interestAmountLabel));
 
+        sidebar.add(Box.createVerticalStrut(10));
+
+        // PLAYER MONEY
+        sidebar.add(fixAlign(createLabel("PLAYER MONEY", Color.RED)));
+        moneyLabel = createValueLabel("$" + GameManager.getInstance().getGameState().getMoney(), ACCENT_YELLOW);
+        sidebar.add(fixAlign(moneyLabel));
         sidebar.add(Box.createVerticalStrut(15));
 
+        // HEALTH
+        JLabel healthText = new JLabel("Health", SwingConstants.LEFT);
+        healthText.setForeground(Color.GREEN);
+        healthText.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(healthText);
+
         healthLabel = new JLabel();
-        healthLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
+        healthLabel.setFont(new Font("Monospaced", Font.BOLD, 36));
         healthLabel.setForeground(Color.RED);
-        healthLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        healthLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(healthLabel);
 
         // Initial health set
@@ -466,29 +487,12 @@ public class BiddingPanel extends JPanel {
         sidebar.add(Box.createVerticalStrut(20));
 
         abilitiesPanel = new SpecialCardAbilitiesPanel();
-        abilitiesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        abilitiesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(abilitiesPanel);
         // Refresh abilities once
         abilitiesPanel.refresh(GameManager.getInstance().getGameState());
 
         return sidebar;
-    }
-
-    private JPanel infoBox(String title, JLabel valueLabel) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setMaximumSize(new Dimension(240, 40));
-        panel.setBackground(PANEL_GRAY);
-
-        JLabel l = new JLabel(title);
-        l.setForeground(Color.LIGHT_GRAY);
-
-        if (valueLabel.getForeground() != ACCENT_YELLOW) {
-            valueLabel.setForeground(ACCENT_YELLOW);
-        }
-
-        panel.add(l, BorderLayout.WEST);
-        panel.add(valueLabel, BorderLayout.EAST);
-        return panel;
     }
 
     private void styleButton(JButton btn, boolean primary) {
@@ -501,10 +505,97 @@ public class BiddingPanel extends JPanel {
     }
 
     private void styleControlIcon(JButton btn) {
-        btn.setFont(new Font("Arial", Font.BOLD, 24));
-        btn.setForeground(Color.GRAY);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
+        // No longer needed
+    }
+
+    // CUSTOM BUTTON FOR TRIANGLES
+    private class TriangleButton extends JButton {
+        private boolean right; // true for right (>), false for left (<)
+        private String symbol; // + or -
+
+        public TriangleButton(boolean right, String symbol) {
+            this.right = right;
+            this.symbol = symbol;
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorderPainted(false);
+            setPreferredSize(new Dimension(50, 50));
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Button state
+            if (getModel().isPressed()) {
+                g2.setColor(new Color(100, 100, 100)); // Darker on press
+            } else if (getModel().isRollover()) {
+                g2.setColor(new Color(180, 180, 180)); // Lighter on hover
+            } else {
+                g2.setColor(Color.GRAY); // Default
+            }
+
+            int w = getWidth();
+            int h = getHeight();
+            int[] xPoints;
+            int[] yPoints;
+
+            if (right) {
+                // Triangle pointing right >
+                xPoints = new int[] { 5, w - 5, 5 };
+                yPoints = new int[] { 5, h / 2, h - 5 };
+            } else {
+                // Triangle pointing left <
+                xPoints = new int[] { w - 5, 5, w - 5 };
+                yPoints = new int[] { 5, h / 2, h - 5 };
+            }
+
+            g2.fillPolygon(xPoints, yPoints, 3);
+
+            // Draw Symbol (+ or -)
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Arial", Font.BOLD, 22));
+            FontMetrics fm = g2.getFontMetrics();
+            int sw = fm.stringWidth(symbol);
+            int sh = fm.getAscent();
+
+            // Center roughly based on triangle shape
+            int tx = (w - sw) / 2;
+            if (right)
+                tx -= 3; // Shift slightly left for visual balance
+            else
+                tx += 3;
+
+            int ty = (h + sh) / 2 - 4;
+
+            g2.drawString(symbol, tx, ty);
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private JLabel createLabel(String text, Color fgColor) {
+        JLabel label = new JLabel(text, SwingConstants.LEFT);
+        label.setForeground(fgColor);
+        label.setFont(new Font("Monospaced", Font.BOLD, 12));
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
+    }
+
+    private JLabel createValueLabel(String value, Color fgColor) {
+        JLabel label = new JLabel(value, SwingConstants.LEFT);
+        label.setForeground(fgColor);
+        label.setFont(new Font("Monospaced", Font.BOLD, 18));
+        label.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
+    }
+
+    private Component fixAlign(JComponent c) {
+        c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return c;
     }
 }
