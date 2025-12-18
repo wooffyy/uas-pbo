@@ -40,6 +40,27 @@ public class Phase1Panel extends JPanel {
     private JLabel interestRateValueLabel;
     private JLabel bossNameLabel;
     private JLabel[] specialCardLabels;
+    private JLabel notificationLabel;
+    private Timer notificationTimer;
+
+    public void showNotification(String message) {
+        if (notificationLabel != null) {
+            notificationLabel.setText(" " + message + " ");
+            notificationLabel.setOpaque(true);
+            notificationLabel.setVisible(true);
+            
+            if (notificationTimer != null && notificationTimer.isRunning()) {
+                notificationTimer.stop();
+            }
+            
+            notificationTimer = new Timer(3000, e -> {
+                notificationLabel.setVisible(false);
+                notificationLabel.setOpaque(false);
+            });
+            notificationTimer.setRepeats(false);
+            notificationTimer.start();
+        }
+    }
 
     public Phase1Panel(UIWindow parentFrame, GameManager gameManager) {
         this.gameManager = gameManager;
@@ -220,6 +241,17 @@ public class Phase1Panel extends JPanel {
         centerArea.setLayout(new BoxLayout(centerArea, BoxLayout.Y_AXIS));
         centerArea.setOpaque(false);
         centerArea.add(Box.createVerticalGlue());
+
+        // Notification Label
+        notificationLabel = new JLabel("", SwingConstants.CENTER);
+        notificationLabel.setFont(new Font("Monospaced", Font.BOLD, 16));
+        notificationLabel.setForeground(Color.CYAN);
+        notificationLabel.setBackground(new Color(0, 0, 0, 150)); // Semi-transparent black
+        notificationLabel.setOpaque(false); // Initially transparent/invisible
+        notificationLabel.setVisible(false);
+        notificationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centerArea.add(notificationLabel);
+        centerArea.add(Box.createVerticalStrut(20));
 
         trickPlayArea = new JPanel(new FlowLayout(FlowLayout.CENTER, 50, 50));
         trickPlayArea.setOpaque(false);

@@ -25,10 +25,25 @@ public final class Rules {
 
     public static boolean getTrickWinner(Card leadCard, Card playerCard, Card dealerCard,
             model.entity.dealer.Dealer dealer, int trickNumber) {
+        return getTrickWinner(leadCard, playerCard, dealerCard, dealer, trickNumber, null);
+    }
+
+    public static boolean getTrickWinner(Card leadCard, Card playerCard, Card dealerCard,
+            model.entity.dealer.Dealer dealer, int trickNumber, TrickModifier modifier) {
+        
+        if (modifier != null && modifier.isForceWin()) {
+            return true;
+        }
+
         Suit leadSuit = leadCard.getSuit();
 
-        int playerValue = playerCard.getRank().getValue();
-        int dealerValue = dealerCard.getRank().getValue();
+        int playerValue = playerCard.getPower();
+        int dealerValue = dealerCard.getPower();
+
+        // Apply Rank Boost
+        if (modifier != null) {
+            playerValue += modifier.getPlayerRankBoost();
+        }
 
         // --- BOSS SKILL: ECONOMIST (Value Drain) ---
         // Trigger: Trick 5 onwards (trickNumber >= 5)
@@ -39,6 +54,17 @@ public final class Rules {
 
         boolean playerFollowsSuit = (playerCard != null && playerCard.getSuit() == leadSuit);
         boolean dealerFollowsSuit = (dealerCard != null && dealerCard.getSuit() == leadSuit);
+
+        if (modifier != null) {
+            if (modifier.isForceFollowSuit()) {
+                playerFollowsSuit = true;
+            }
+            if (modifier.isIgnoreSuitRule()) {
+                // If ignoring suit rule, we effectively treat it as a rank comparison (win if higher rank)
+                // We bypass the standard suit check logic below
+                return playerValue > dealerValue;
+            }
+        }
 
         // --- BOSS SKILL: FINAL BOSS (Dominance) ---
         // Trigger: Always active

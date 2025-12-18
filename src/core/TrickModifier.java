@@ -75,6 +75,16 @@ public class TrickModifier {
         this.flatPointsBonus += bonus;
     }
 
+    private java.util.List<String> notificationMessages = new java.util.ArrayList<>();
+
+    public java.util.List<String> getNotificationMessages() {
+        return notificationMessages;
+    }
+
+    public void addNotificationMessage(String message) {
+        this.notificationMessages.add(message);
+    }
+
     public static TrickModifier combine(TrickModifier m1, TrickModifier m2) {
         if (m1 == null) return m2;
         if (m2 == null) return m1;
@@ -89,6 +99,9 @@ public class TrickModifier {
         combined.addPointMultiplier(m1.getPointMultiplier() * m2.getPointMultiplier());
         combined.addFlatPointsBonus(m1.getFlatPointsBonus() + m2.getFlatPointsBonus());
         
+        combined.getNotificationMessages().addAll(m1.getNotificationMessages());
+        combined.getNotificationMessages().addAll(m2.getNotificationMessages());
+
         return combined;
     }
 }

@@ -60,141 +60,168 @@ public class SpecialCard {
 
         TrickModifier modifier = new TrickModifier();
         GameState gameState = ctx.getGameState();
+        boolean triggered = false;
 
         switch (effectType) {
             // BEFORE_STAGE
             case LEAD_LEECH:
                 gameState.setPlayerLeads(true);
+                gameState.setDealerLeadsTrick(false); // Explicitly override dealer lead
+                triggered = true;
                 break;
             case DEALER_DOOM:
                 gameState.getCurrentDealer().applyRankModifier(-2);
+                triggered = true;
                 break;
 
-            // AFTER_STAGE
+            // AFTER_ROUND
             case HEART_HARVESTER:
-                if (ctx.getCapturedCards() != null) {
-                    for (Card card : ctx.getCapturedCards()) {
-                        if (card.getSuit() == Suit.HEARTS) {
-                            gameState.setDebt(gameState.getDebt() - 2);
-                        }
-                    }
+                // Logic: IF (PlayersWin == TRUE AND PlayerCard.suit == HEART) -2 DEBT
+                if (ctx.isPlayerWin() && ctx.getPlayerCard().getSuit() == Suit.HEARTS) {
+                     gameState.setDebt(gameState.getDebt() - 2);
+                     modifier.addNotificationMessage(name + ": -2 Debt (Won with Heart)");
+                     triggered = true;
                 }
                 break;
             case CLUB_CRUSHER:
-                if (ctx.getCapturedCards() != null) {
-                    int pointsToAdd = 0;
-                    for (Card card : ctx.getCapturedCards()) {
-                        if (card.getSuit() == Suit.CLUBS) {
-                            pointsToAdd += 2;
-                        }
-                    }
-                    gameState.setScorePhase1(gameState.getScorePhase1() + pointsToAdd);
+                // Logic: IF (PlayersWin == TRUE AND PlayerCard.suit == CLUB) +2 POINT
+                if (ctx.isPlayerWin() && ctx.getPlayerCard().getSuit() == Suit.CLUBS) {
+                    gameState.setScorePhase1(gameState.getScorePhase1() + 2);
+                    modifier.addNotificationMessage(name + ": +2 Points (Won with Club)");
+                    triggered = true;
                 }
                 break;
             case DIAMOND_DEALER:
-                if (ctx.getCapturedCards() != null) {
-                    for (Card card : ctx.getCapturedCards()) {
-                        if (card.getSuit() == Suit.DIAMONDS) {
-                            // "Diamond captured: -0,1 interest each"
-                            // Interpreting as -0.1% (0.001) to be balanced for a Common card
-                            // If taken literally as -0.1 (10%), it would be too OP.
-                            double currentRate = gameState.getInterestRate();
-                            if (currentRate > 0) {
-                                gameState.setInterestRate(Math.max(0, currentRate - 0.001));
-                            }
-                        }
+                // Logic: IF (PlayersWin == TRUE AND PlayerCard.suit == DIAMOND) IF (INTEREST != 0) -0,1 INTEREST
+                if (ctx.isPlayerWin() && ctx.getPlayerCard().getSuit() == Suit.DIAMONDS) {
+                    double currentRate = gameState.getInterestRate();
+                    if (currentRate > 0) {
+                        gameState.setInterestRate(Math.max(0, currentRate - 0.001));
+                        modifier.addNotificationMessage(name + ": -0.1% Interest (Won with Diamond)");
+                        triggered = true;
                     }
                 }
                 break;
             case HIGH_HIJACK:
-                if (ctx.getCapturedCards() != null) {
-                    int pointsToAdd = 0;
-                    for (Card card : ctx.getCapturedCards()) {
-                        if (card.getRank().isFaceCard()) {
-                            pointsToAdd += 10;
-                        }
-                    }
-                    gameState.setScorePhase1(gameState.getScorePhase1() + pointsToAdd);
+                // Logic: IF (PlayerWin == TRUE AND DealerCard.rank == K OR Q OR J) +10 POINT
+                if (ctx.isPlayerWin() && ctx.getDealerCard().getRank().isFaceCard()) {
+                    gameState.setScorePhase1(gameState.getScorePhase1() + 10);
+                    modifier.addNotificationMessage(name + ": +10 Points (Captured Face Card)");
+                    triggered = true;
                 }
                 break;
-            case POINT_PARASITE:
-                if (gameState.getScorePhase1() > 50) {
-                    gameState.setScorePhase1((int) (gameState.getScorePhase1() * 1.3));
+             case TRICK_THIEF:
+                // IF (PlayersWin == TRUE) 2 x (DealerCard.value + PlayerCard.value) by 0.2 chance
+                if (ctx.isPlayerWin() && ctx.getRandom().nextDouble() < 0.2) {
+                     modifier.addPointMultiplier(2.0); 
+                     modifier.addNotificationMessage(name + ": Double Points!");
+                     triggered = true;
+                }
+                break;
+            case TEN_TAKER:
+                // IF (PlayerWin == TRUE AND DealerCard.rank == 10) +20% (DealerCard.value + PlayerCard.value)
+                if (ctx.isPlayerWin() && ctx.getDealerCard().getRank().getValue() == 10) {
+                    modifier.addPointMultiplier(1.2);
+                    modifier.addNotificationMessage(name + ": +20% Points");
+                    triggered = true;
+                }
+                break;
+            case CASCADE_CAPTURE:
+                // IF (RoundWinStreak > 3) +20 (DealerCard.value + PlayerCard.value)
+                if (ctx.getWinStreak() > 3) {
+                    modifier.addFlatPointsBonus(20);
+                    modifier.addNotificationMessage(name + ": +20 Bonus Points");
+                    triggered = true;
                 }
                 break;
 
-            // BEFORE_ROUND
-            case LOW_LIFTER:
-                if (ctx.getPlayerCard().getRank().getValue() >= 2 && ctx.getPlayerCard().getRank().getValue() <= 5) {
-                    modifier.addPlayerRankBoost(2);
+            // AFTER_STAGE
+            case POINT_PARASITE:
+                if (gameState.getScorePhase1() > 50) {
+                    gameState.setScorePhase1((int) (gameState.getScorePhase1() * 1.3));
+                    modifier.addNotificationMessage(name + ": +30% Total Points");
+                    triggered = true;
                 }
                 break;
 
             // ON_ROUND
+             case LOW_LIFTER:
+                // IF (PlayerCard.rank == 2 OR 3 OR 4 OR 5) PlayerCard.rank +2
+                if (ctx.getPlayerCard().getRank().getValue() >= 2 && ctx.getPlayerCard().getRank().getValue() <= 5) {
+                    modifier.addPlayerRankBoost(2);
+                    modifier.addNotificationMessage(name + ": +2 Rank Boost");
+                    triggered = true;
+                }
+                break;
             case RANK_RISER:
-                if (ctx.getPlayerCard().getValue() < ctx.getDealerCard().getValue()) {
+                // IF (PlayerCard.rank < DealerCard.rank) +1 PlayerCard.rank Cooldown = 3 round
+                if (ctx.getPlayerCard().getPower() < ctx.getDealerCard().getPower()) {
                     modifier.addPlayerRankBoost(1);
                     setCooldownRound(3);
+                    modifier.addNotificationMessage(name + ": +1 Rank Boost");
+                    triggered = true;
                 }
                 break;
             case SPADE_SNEAK:
+                // IF (PlayerCard.suit == SPADE AND PlayerCard.rank > DealerCard.rank) Ignore DealerCard.suit Cooldown = 1 stage
                 if (ctx.getPlayerCard().getSuit() == Suit.SPADES
-                        && ctx.getPlayerCard().getValue() > ctx.getDealerCard().getValue()) {
+                        && ctx.getPlayerCard().getPower() > ctx.getDealerCard().getPower()) {
                     modifier.setIgnoreSuitRule(true);
                     setCooldownStage(1);
+                    modifier.addNotificationMessage(name + ": Ignored Suit Rule");
+                    triggered = true;
                 }
                 break;
             case SUIT_SWAPPER:
+                // IF (PlayerCard.suit != DealerCard.suit AND PlayerCard.rank > DealerCard.rank) PlayerCard.suit = DealerCard.suit
                 if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit()
-                        && ctx.getPlayerCard().getValue() > ctx.getDealerCard().getValue()) {
-                    modifier.setForceFollowSuit(true);
-                }
-                break;
-            case TRICK_THIEF:
-                if (ctx.isPlayerWin() && ctx.getRandom().nextDouble() < 0.2) {
-                    modifier.setRetrigger(true);
+                        && ctx.getPlayerCard().getPower() > ctx.getDealerCard().getPower()) {
+                    modifier.setForceFollowSuit(true); 
+                    modifier.addNotificationMessage(name + ": Forced Follow Suit");
+                    triggered = true;
                 }
                 break;
             case VOID_VIPER:
+                // IF (PlayerCard.suit != DealerCard.suit) Ignore Suit
                 if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit()) {
                     modifier.setIgnoreSuitRule(true);
+                    setCooldownRound(3); 
+                    modifier.addNotificationMessage(name + ": Suit Ignored");
+                    triggered = true;
                 }
                 break;
             case RANK_RAMPAGE:
-                if (ctx.getPlayerCard().getValue() < ctx.getDealerCard().getValue()) {
+                 // IF (PlayerCard.rank < DealerCard.rank) +3 PlayerCard.rank Cooldown = 3 round
+                if (ctx.getPlayerCard().getPower() < ctx.getDealerCard().getPower()) {
                     modifier.addPlayerRankBoost(3);
                     setCooldownRound(3);
+                    modifier.addNotificationMessage(name + ": +3 Rank Boost");
+                    triggered = true;
                 }
                 break;
             case TRUMP_TYRANT:
-                if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit()
-                        && ctx.getPlayerCard().getValue() < ctx.getDealerCard().getValue()) {
+                 // IF (PlayerCard.suit != DealerCard.suit) -> Force Win!
+                 if (ctx.getPlayerCard().getSuit() != ctx.getDealerCard().getSuit()) {
                     modifier.setForceWin(true);
                     setCooldownRound(3);
+                    modifier.addNotificationMessage(name + ": Tyrant Win!");
+                    triggered = true;
                 }
                 break;
             case INFINITE_TRICKS:
+                // IF (PlayersWin = TRUE) 2 x (DealerCard.value + PlayerCard.value)
                 if (ctx.isPlayerWin()) {
-                    modifier.setRetrigger(true);
-                    modifier.setRetriggerCount(1); // just a flag
-                }
-                break;
-
-            // AFTER_ROUND
-            case TEN_TAKER:
-                if (ctx.isPlayerWin() && (ctx.getPlayerCard().getRank().getValue() == 10
-                        || ctx.getDealerCard().getRank().getValue() == 10)) {
-                    modifier.addPointMultiplier(1.2);
-                }
-                break;
-            case CASCADE_CAPTURE:
-                if (ctx.getWinStreak() >= 3) {
-                    modifier.addFlatPointsBonus(20);
+                     modifier.addPointMultiplier(2.0);
+                     modifier.addNotificationMessage(name + ": Infinite Tricks (Double Points)");
+                     triggered = true;
                 }
                 break;
         }
 
-        return modifier;
+        if (triggered) {
+            return modifier;
+        }
+        return null; // Return null if not triggered to avoid empty modifiers
     }
 
     // COOLDOWN SYSTEM

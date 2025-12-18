@@ -1,0 +1,19 @@
+name,method,raw logic / pseudocode ,price,description			
+Rank Riser,ON_ROUND,IF (PlayerCard.rank < DealerCard.rank)	 +1 PlayerCard.rank	 Cooldown = 3 round	 ,6,`+1 rank played card when the card is lower than dealer (once / 3 round)
+Heart Harvester,AFTER_ROUND,IF (PlayersWin == TRUE AND PlayerCard.suit == HEART)	 -2 DEBT	,4,Hearts captured: -2 debt each	
+Spade Sneak,ON_ROUND,IF (PlayerCard.suit == SPADE AND PlayerCard.rank > DealerCard.rank)  Ignore DealerCard.suit	 Cooldown = 1 stage	,6,Spades: Ignore follow suit once / stage	
+Club Crusher,AFTER_ROUND,IF (PlayersWin == TRUE AND PlayerCard.suit == HEART)	 +2 POINT	,4,Club captured: +2 point each	
+Diamond Dealer,AFTER_ROUND,"IF (PlayersWin == TRUE AND PlayerCard.suit == DIAMOND)	 IF (INTEREST != 0)	 -0,1 INTEREST	,5,Diamond captured: -0,1 interest each"
+Low Lifter,ON_ROUND,IF (PlayerCard.rank == 2 OR 3 OR 4 OR 5)	 PlayerCard.rank +2,6,2-5 cards: +2 rank vs dealer		
+Ten Taker,AFTER_ROUND,IF (PlayerWin == TRUE AND DealerCard.rank == 10) 	 +20% (DealerCard.value + PlayerCard.value),6,Capture 10: + 20% points total number from that trick		
+Suit Swapper,ON_ROUND,IF (PlayerCard.suit != DealerCard.suit AND PlayerCard.rank > DealerCard.rank)	 PlayerCard.suit = DealerCard.suit,12,Swap suit lo ke suit dealer (force follow +win)		
+High Hijack,AFTER_ROUND,IF (PlayerWin == TRUE AND DealerCard.rank == K OR Q OR J) 	 +10 POINT	,9,J/Q/K: + 10 point from dealer per win	
+Trick Thief,AFTER_ROUND,IF (PlayersWin == TRUE)	 2 x (DealerCard.value + PlayerCard.value) by 0.2 chance	,11,Win trick: 20% chance retrigger (play extra)	
+Void Viper,ON_ROUND,IF (PlayerCard.suit != DealerCard.suit)	 Ignore Suit	,12,Can't follow: Still compare rank (no auto-lose) (once / 3 round)	
+Point Parasite,AFTER_STAGE,IF (TotalPoints > 50)	 +30% TotalPoints,10,Total points >50/stage: +30% all captured pts		
+Lead Leech,BEFORE_STAGE,playerLeads = TRUE,18,Player lead pertama (swap dealer turn)			
+Rank Rampage,ON_ROUND,IF (PlayerCard.rank < DealerCard.rank)	 +3 PlayerCard.rank	 Cooldown = 3 round ,16,"""+3 rank played card when the card is lower than dealer (once / 3 round)"""	
+Cascade Capture,AFTER_ROUND,IF (RoundWinStreak > 3)	 +20 (DealerCard.value + PlayerCard.value),18,Win 3+ consecutive: +20 pts each subsequent trick		
+Trump Tyrant,ON_ROUND,IF (PlayerCard.suit != DealerCard.suit  AND PlayerCard.rank < DealerCard.rank )	 Ignore Suit and Rank 	 Cooldown = 3 Round,60,"Player suit selalu trump (always highest, ignore follow, once/3 round) "	
+Dealer Doom,BEFORE_STAGE,DealerCard.rank = -2,50,Dealer cards -2 rank always			
+Infinite Tricks,ON_ROUND,IF (PlayersWin = TRUE)	 2 x (DealerCard.value + PlayerCard.value)	 ,30,"Win trick: Retrigger full (play 2 cards, capture 3)"	

@@ -30,13 +30,17 @@ public class Phase1Game {
         this.tricksWon = 0;
         this.tricksLost = 0;
         this.totalPoints = 0;
+        this.winStreak = 0;
         this.capturedCards.clear();
         this.playerTrickPile.clear();
         this.dealerTrickPile.clear();
     }
 
+    private int winStreak = 0;
+
     public void playerWinsTrick(Card playerCard, Card dealerCard) {
         tricksWon++;
+        winStreak++;
         if (playerCard != null) playerTrickPile.add(playerCard);
         if (dealerCard != null) playerTrickPile.add(dealerCard);
         // You can add point calculation logic here if needed
@@ -44,6 +48,7 @@ public class Phase1Game {
 
     public void dealerWinsTrick(Card playerCard, Card dealerCard) {
         tricksLost++;
+        winStreak = 0;
         if (playerCard != null) dealerTrickPile.add(playerCard);
         if (dealerCard != null) dealerTrickPile.add(dealerCard);
     }
@@ -75,6 +80,10 @@ public class Phase1Game {
 
     public int getTricksLost() {
         return tricksLost;
+    }
+
+    public int getWinStreak() {
+        return winStreak;
     }
 
     public int getTargetTricks() {

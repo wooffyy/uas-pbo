@@ -2,11 +2,10 @@ package model.state;
 
 import core.EffectContext;
 import core.TrickModifier;
-import model.card.EffectTrigger;
-import model.card.SpecialCard;
-
 import java.util.ArrayList;
 import java.util.List;
+import model.card.EffectTrigger;
+import model.card.SpecialCard;
 
 public class PlayerInventory {
     private final List<SpecialCard> cards = new ArrayList<>();
@@ -45,5 +44,14 @@ public class PlayerInventory {
             card.tickCooldownRound();
             card.tickCooldownStage();
         }
+    }
+
+    public boolean hasEffect(model.card.EffectType type) {
+        for (SpecialCard card : cards) {
+            if (card.getEffectType() == type && card.isAvailable()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

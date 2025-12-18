@@ -13,6 +13,7 @@ abstract public class Card {
     }
 
     public abstract int getValue();
+    public abstract int getPower();
     public abstract boolean isSpecial();
 
     public String getName() { return this.name; }

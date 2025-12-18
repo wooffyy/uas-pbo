@@ -1,5 +1,12 @@
 package core;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+import javax.swing.Timer;
 import model.card.*;
 import model.entity.dealer.Dealer;
 import model.entity.dealer.EconomistBoss;
@@ -7,14 +14,6 @@ import model.entity.dealer.FinalBossDealer;
 import model.entity.dealer.TacticianBoss;
 import model.state.GameState;
 import ui.UIWindow;
-
-import javax.swing.Timer;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class GameManager {
 
@@ -133,16 +132,86 @@ public class GameManager {
             ui.showNotification("FINAL BOSS SKILL: Dominance!\nIf suits match, you need +3 rank difference to win!");
         }
 
-        // Use the new Rules.getTrickWinner method
+        // --- SPECIAL CARD LOGIC (ON_ROUND) ---
+        // 1. Pre-calculation Context (for modifying Rank, forcing Win/Loss etc.)
+        // Note: winStreak is current streak before this trick result
+        EffectContext ctxPre = new EffectContext(
+            gameState,
+            playerCard,
+            dealerCard,
+            false, 
+            currentTrickNum,
+            gameState.getRound(),
+            gameState.getScorePhase1(),
+            phase1.getWinStreak()
+        );
+
+        TrickModifier modPre = gameState.getInventory().applyEffects(ctxPre, EffectTrigger.ON_ROUND);
+        
+        // Show Pre-notifications
+        if (modPre != null) {
+            for (String msg : modPre.getNotificationMessages()) {
+                ui.getPhase1Panel().showNotification(msg);
+            }
+        }
+
+        // Use the new Rules.getTrickWinner method with modifier
         boolean playerWins = Rules.getTrickWinner(gameState.getCurrentLeadCard(), playerCard, dealerCard, dealer,
-                currentTrickNum);
+                currentTrickNum, modPre);
 
         if (playerWins) {
             phase1.playerWinsTrick(playerCard, dealerCard);
             gameState.setDealerLeadsTrick(false); // Player wins, player leads next trick
+        } else {
+            phase1.dealerWinsTrick(playerCard, dealerCard);
+            gameState.setDealerLeadsTrick(true); // Dealer wins, dealer leads next trick
+        }
 
+        // Logic Check: LEAD_LEECH
+        // If player has Lead Leech, they ALWAYS lead the next trick regardless of who won.
+        if (gameState.getInventory().hasEffect(EffectType.LEAD_LEECH)) {
+            gameState.setDealerLeadsTrick(false);
+        }
+
+        // --- SPECIAL CARD LOGIC (Post-Win determination) ---
+        // Apply ON_ROUND again (for effects depending on win, e.g. Infinite Tricks)
+        // And AFTER_ROUND effects
+        EffectContext ctxPost = new EffectContext(
+             gameState,
+             playerCard,
+             dealerCard,
+             playerWins,
+             currentTrickNum,
+             gameState.getRound(),
+             gameState.getScorePhase1(),
+             phase1.getWinStreak() 
+        );
+        
+        TrickModifier modPostOnRound = gameState.getInventory().applyEffects(ctxPost, EffectTrigger.ON_ROUND);
+        TrickModifier modAfter = gameState.getInventory().applyEffects(ctxPost, EffectTrigger.AFTER_ROUND);
+        
+        TrickModifier finalMod = TrickModifier.combine(modPre, TrickModifier.combine(modPostOnRound, modAfter));
+        
+        // Show Post-notifications
+         if (modPostOnRound != null) {
+            for (String msg : modPostOnRound.getNotificationMessages()) {
+                ui.getPhase1Panel().showNotification(msg);
+            }
+        }
+         if (modAfter != null) {
+            for (String msg : modAfter.getNotificationMessages()) {
+                ui.getPhase1Panel().showNotification(msg);
+            }
+        }
+
+        if (playerWins) {
             // If player followed suit, they get money
-            if (playerCard.getSuit() == gameState.getCurrentLeadCard().getSuit()) {
+            boolean followedSuit = (playerCard.getSuit() == gameState.getCurrentLeadCard().getSuit());
+            if (finalMod != null && finalMod.isForceFollowSuit()) {
+                followedSuit = true;
+            }
+
+            if (followedSuit) {
                 // Calculate money value, considering Boss skills (e.g. Economist -1 value)
                 int playerValue = Rules.getCardValueForMoney(playerCard);
                 if (dealer != null) {
@@ -150,17 +219,23 @@ public class GameManager {
                 }
 
                 int moneyEarned = playerValue + Rules.getCardValueForMoney(dealerCard);
-                // Ensure non-negative money if skill reduces it too much (though max(1,...) is
-                // used in Boss)
+                
+                // Apply Multiplier and Flat Bonus from SpecialCards
+                if (finalMod != null) {
+                    if (finalMod.getPointMultiplier() != 1.0) {
+                         moneyEarned = (int) (moneyEarned * finalMod.getPointMultiplier());
+                    }
+                    moneyEarned += finalMod.getFlatPointsBonus();
+                }
+
+                // Ensure non-negative money
                 moneyEarned = Math.max(0, moneyEarned);
 
                 gameState.addMoney(moneyEarned);
                 gameState.addMoneyFromTricks(moneyEarned);
             }
-        } else {
-            phase1.dealerWinsTrick(playerCard, dealerCard);
-            gameState.setDealerLeadsTrick(true); // Dealer wins, dealer leads next trick
         }
+        
         System.out.println("Player plays " + playerCard.getName() + ", Dealer plays "
                 + (dealerCard != null ? dealerCard.getName() : "nothing") + ". Player wins: " + playerWins);
 
@@ -233,7 +308,13 @@ public class GameManager {
                     gameState.getRound(),
                     gameState.getScorePhase1(),
                     phase1.getCapturedCards());
-            gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
+            TrickModifier mod = gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
+            
+            if (mod != null) {
+                for (String msg : mod.getNotificationMessages()) {
+                    ui.getPhase1Panel().showNotification(msg);
+                }
+            }
         } else {
             gameState.setPhase1Won(false);
             gameState.decreaseLife();
@@ -312,8 +393,19 @@ public class GameManager {
             playerHand.add(deck.remove(0));
             dealerHand.add(deck.remove(0));
         }
-        // Ensure dealer leads the first trick of the new round
+        // Ensure dealer leads the first trick of the new round (default)
         gameState.setDealerLeadsTrick(true);
+
+        // Apply BEFORE_STAGE effects (e.g. Lead Leech can change dealerLeadsTrick)
+        EffectContext beforeStageCtx = new EffectContext(gameState, gameState.getRound(), 0, null);
+        TrickModifier mod = gameState.getInventory().applyEffects(beforeStageCtx, EffectTrigger.BEFORE_STAGE);
+        
+        // Show notifications if any
+        if (mod != null && ui.getPhase1Panel() != null) {
+            for (String msg : mod.getNotificationMessages()) {
+                 ui.getPhase1Panel().showNotification(msg);
+            }
+        }
     }
 
     private void setDealerForCurrentStage() {
