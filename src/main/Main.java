@@ -1,16 +1,11 @@
 package main;
 
 import core.GameManager;
-import model.card.EffectTrigger;
-import model.card.EffectType;
-import model.card.Rarity;
+import java.util.List;
+import javax.swing.*;
 import model.card.SpecialCard;
 import model.state.GameState;
 import ui.UIWindow;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The main entry point for the application.

@@ -1,11 +1,11 @@
 package model.entity.dealer;
 
+import core.Rules;
 import java.util.Random;
 import model.card.Card;
-import model.card.Suit;
-import model.card.SpecialCard;
-import model.card.NormalCard; // New import
-import core.Rules; // New import
+import model.card.NormalCard;
+import model.card.SpecialCard; // New import
+import model.card.Suit; // New import
 
 /**
  * Base class untuk semua Boss Dealer.
@@ -25,6 +25,14 @@ public abstract class BossDealer extends Dealer {
 
     public BossDealer(String name, Random rng) {
         super(name, rng);
+    }
+
+    @Override
+    public int bid(SpecialCard biddingItem, int round, int playerBid) {
+        // Standard boss re-bid logic: bid 2-10 more than player, up to the boss's max
+        int rebidAmount = 2 + rng.nextInt(9); // 2-10
+        int dealerBid = playerBid + rebidAmount;
+        return Math.min(dealerBid, getMaxBid());
     }
 
     // Helper method to get effective value of dealer's card (considering its rankModifier)

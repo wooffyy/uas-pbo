@@ -1,15 +1,15 @@
 package ui;
 
+import core.BiddingResult;
 import core.GameManager;
 import core.Phase2Game;
+import java.awt.*;
+import java.util.List;
+import javax.swing.*;
 import model.card.SpecialCard;
 import model.state.GameState;
 import model.state.PlayerInventory;
 import ui.component.SpecialCardAbilitiesPanel;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 
 public class BiddingPanel extends JPanel {
 
@@ -32,6 +32,7 @@ public class BiddingPanel extends JPanel {
     // Bidding Controls
     private int currentPlayerBid = 0;
     private JLabel bidValueLabel;
+    private JLabel dealerBidLabel;
 
     enum State {
         SELECTION,
@@ -166,37 +167,24 @@ public class BiddingPanel extends JPanel {
     private void renderBiddingWarStage() {
         Phase2Game p2 = GameManager.getInstance().getPhase2Game();
         SpecialCard card = p2.getBiddingItem();
-        GameState gs = GameManager.getInstance().getGameState();
 
-        // Calculate Dealer Bid
-        // Note: calling bid() multiple times might yield different results if random is
-        // used.
-        // We should cache it or ensure our Dealer logic is stable for same args or we
-        // just store it in Phase2Game.
-        // For now, we'll assume the dealer returns a consistent bid for the same
-        // card/round or we just take one sample.
-        int dealerBid = gs.getCurrentDealer().bid(card, gs.getRound());
-
-        // --- TOP: DEALER BID ---
+        // --- TOP: Title ---
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
         topPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 20, 0));
+        JLabel title = new JLabel("PLACE YOUR BID", SwingConstants.CENTER);
+        title.setFont(new Font("Monospaced", Font.BOLD, 24));
+        title.setForeground(Color.WHITE);
+        topPanel.add(title, BorderLayout.CENTER);
 
-        JLabel dealerTitle = new JLabel("Dealer's Bid", SwingConstants.CENTER);
-        dealerTitle.setFont(new Font("Arial", Font.PLAIN, 20));
-        dealerTitle.setForeground(Color.WHITE);
-
-        JLabel dealerValue = new JLabel(String.valueOf(dealerBid), SwingConstants.CENTER);
-        dealerValue.setFont(new Font("Arial", Font.BOLD, 54));
-        dealerValue.setForeground(Color.WHITE);
-
-        JPanel dPanel = new JPanel(new GridLayout(2, 1));
-        dPanel.setOpaque(false);
-        dPanel.add(dealerTitle);
-        dPanel.add(dealerValue);
-        topPanel.add(dPanel, BorderLayout.CENTER);
+        dealerBidLabel = new JLabel("Dealer's Bid: $" + p2.getDealerBid(), SwingConstants.CENTER);
+        dealerBidLabel.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        dealerBidLabel.setForeground(ACCENT_YELLOW);
+        dealerBidLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        topPanel.add(dealerBidLabel, BorderLayout.SOUTH);
 
         arenaPanel.add(topPanel, BorderLayout.NORTH);
+
 
         // --- CENTER: CARD ---
         JPanel centerPanel = new JPanel(new GridBagLayout());
@@ -261,7 +249,7 @@ public class BiddingPanel extends JPanel {
         bidBtn.setForeground(Color.WHITE);
         bidBtn.setPreferredSize(new Dimension(120, 45));
         bidBtn.setFocusPainted(false);
-        bidBtn.addActionListener(e -> submitBid(dealerBid));
+        bidBtn.addActionListener(e -> submitBid());
 
         actions.add(bidBtn);
 
@@ -291,44 +279,33 @@ public class BiddingPanel extends JPanel {
         bidValueLabel.setText(String.valueOf(currentPlayerBid));
     }
 
-    private void submitBid(int visibleDealerBid) {
+    private void submitBid() {
         GameState gs = GameManager.getInstance().getGameState();
+        Phase2Game p2 = GameManager.getInstance().getPhase2Game();
 
-        // Logic interpretation:
-        // 1. If we bid LESS than dealer -> Simple Loss (User says "add overlay... IF
-        // money < dealer bid").
-        // This implies specific handling for being "too poor to win".
-
-        if (currentPlayerBid <= visibleDealerBid) {
-            // Check specific condition: "kalo duitnya < bidnya dealer"
-            if (gs.getMoney() < visibleDealerBid) {
-                showOverlay("Uang anda kurang, silahkan lanjut ke stage berikutnya");
-                return;
-            } else {
-                // Just a normal loss because we chose to bid low?
-                // Or maybe the user implies we CAN'T bid lower?
-                // "jika bid kita kurang dari dealer tambahin overlay ... kalo duitnya < bidnya
-                // dealer"
-                // This implies if we lose AND we are poor, show overlay.
-                // If we lose but have money, maybe just "Dealer wins"?
-                JOptionPane.showMessageDialog(this, "Dealer's bid is higher. You lost the item.", "Auction Lost",
-                        JOptionPane.INFORMATION_MESSAGE);
-                finishBidding();
-                return;
-            }
+        if (gs.getMoney() < currentPlayerBid) {
+            showOverlay("Uang anda kurang untuk melakukan bid ini.");
+            return;
         }
 
-        // 2. If we bid HIGHER -> Win (assuming we can afford OUR bid)
-        if (currentPlayerBid > visibleDealerBid) {
-            if (gs.getMoney() < currentPlayerBid) {
-                // We bid more than we have?
-                // "Uang anda kurang" applies here too naturally.
-                showOverlay("Uang anda kurang, silahkan lanjut ke stage berikutnya");
-                return;
-            }
+        try {
+            BiddingResult result = p2.placePlayerBid(currentPlayerBid);
 
-            // Win Case
-            addCardToInventory(GameManager.getInstance().getPhase2Game().getBiddingItem(), currentPlayerBid);
+            if (result.getStatus() == BiddingResult.Status.WIN) {
+                String message = String.format("You won the auction!\nYour bid: $%d\nDealer's bid: $%d", result.getPlayerBid(), result.getDealerBid());
+                JOptionPane.showMessageDialog(this, message, "Victory", JOptionPane.INFORMATION_MESSAGE);
+                addCardToInventory(p2.getBiddingItem(), result.getPlayerBid());
+            } else if (result.getStatus() == BiddingResult.Status.ONGOING) {
+                // Dealer has re-bid, update UI to show the new state
+                String message = String.format("The dealer outbid you!\nTheir new bid is $%d. Place a higher bid or skip.", result.getDealerBid());
+                JOptionPane.showMessageDialog(this, message, "Outbid!", JOptionPane.INFORMATION_MESSAGE);
+                currentPlayerBid = result.getDealerBid() + 10; // Suggest a new bid
+                bidValueLabel.setText(String.valueOf(currentPlayerBid));
+                dealerBidLabel.setText("Dealer's Bid: $" + result.getDealerBid());
+            }
+            // The 'LOSE' case is handled by the player explicitly skipping.
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Bid Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -359,19 +336,19 @@ public class BiddingPanel extends JPanel {
                 // Proceed to buy
             } else {
                 // Cancelled means we forfeit the win?
+                finishBidding(); // Forfeit if cancelled
                 return;
             }
         }
 
         gs.decreaseMoney(cost);
         gs.addInventory(card);
-        JOptionPane.showMessageDialog(this, "You won the auction!", "Victory", JOptionPane.INFORMATION_MESSAGE);
-        finishBidding();
+        GameManager.getInstance().onPhase2Finish(); // Proceed to next game phase after winning
     }
 
     private void showOverlay(String msg) {
         Object[] options = { "Lanjut ke Stage Berikutnya" };
-        JOptionPane.showOptionDialog(this,
+        int choice = JOptionPane.showOptionDialog(this,
                 msg,
                 "Uang Kurang",
                 JOptionPane.OK_OPTION,
@@ -380,11 +357,18 @@ public class BiddingPanel extends JPanel {
                 options,
                 options[0]);
 
-        finishBidding();
+        if (choice == JOptionPane.OK_OPTION || choice == JOptionPane.CLOSED_OPTION) {
+            finishBidding();
+        }
     }
 
     private void finishBidding() {
-        GameManager.getInstance().onPhase2Finish();
+        // If player skips, it's a loss.
+        Phase2Game p2 = GameManager.getInstance().getPhase2Game();
+        BiddingResult result = p2.playerSkips();
+        String message = String.format("You skipped the auction and lost.\nYour last bid: $%d\nDealer's bid: $%d", result.getPlayerBid(), result.getDealerBid());
+        JOptionPane.showMessageDialog(this, message, "Auction Lost", JOptionPane.INFORMATION_MESSAGE);
+        GameManager.getInstance().onPhase2Finish(); // Proceed to next game phase
     }
 
     /* ================= SIDEBAR ================= */

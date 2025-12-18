@@ -2,15 +2,20 @@ package core;
 
 import java.util.List;
 import model.card.SpecialCard;
+import model.entity.dealer.Dealer;
 import model.state.GameState;
 
-// Logic Bidding dan Shop 
+// Logic Bidding dan Shop
 public class Phase2Game {
     private final GameState gameState;
     private final Shop shop;
     private List<SpecialCard> shopItems;
-    private SpecialCard biddingItem;
     private List<SpecialCard> biddingOptions;
+
+    // State for the current auction
+    private SpecialCard currentBiddingItem;
+    private int currentPlayerBid;
+    private int currentDealerBid;
 
     public Phase2Game(GameState gameState, Shop shop) {
         this.gameState = gameState;
@@ -31,59 +36,65 @@ public class Phase2Game {
         }
 
         gameState.addInventory(item);
-        gameState.setMoney(gameState.getMoney() - item.getPrice());
+        gameState.decreaseMoney(item.getPrice());
         shopItems.remove(item);
         return true;
     }
 
     public void rollBiddingItem() {
         biddingOptions = shop.rollBiddingOptions(gameState.getRound());
-        biddingItem = null; // Wait for selection
+        currentBiddingItem = null; // Wait for selection
     }
 
     public void selectBiddingItem(SpecialCard item) {
-        this.biddingItem = item;
+        this.currentBiddingItem = item;
+        // Reset auction state whenever a new item is selected
+        this.currentPlayerBid = 0;
+        this.currentDealerBid = 0;
     }
 
-    public BiddingResult bid(int playerBid) throws GameException {
-        if (biddingItem == null) {
+    public BiddingResult placePlayerBid(int newPlayerBid) throws GameException {
+        if (currentBiddingItem == null) {
             throw new GameException("No bidding item selected");
         }
-
-        if (playerBid <= 0) {
-            throw new GameException("Invalid bid");
+        if (currentDealerBid > 0 && newPlayerBid <= currentDealerBid) {
+            throw new GameException("You must bid higher than the dealer's last bid of $" + currentDealerBid);
+        }
+        if (newPlayerBid > gameState.getMoney()) {
+            throw new GameException("You cannot afford this bid.");
         }
 
-        int dealerBid = gameState.getCurrentDealer().bid(biddingItem, gameState.getRound());
+        Dealer dealer = gameState.getCurrentDealer();
+        int dealerMaxBid = dealer.getMaxBid();
 
-        // User request: overlay "uang anda kurang" if money < dealerBid?
-        // Logic: Compare bids. If Player > Dealer, then check if Player handles money.
-        // Actually, bid logic implies: Player says $100. Dealer says $120. Player
-        // loses.
-        // Or: Player says $130. Dealer says $120. Player wins. THEN check if Player has
-        // $130.
-
-        BiddingResult result;
-
-        if (playerBid == dealerBid) {
-            result = BiddingResult.tie(dealerBid);
-        } else if (playerBid > dealerBid) {
-            // If player wins the bid, they MUST pay.
-            if (playerBid > gameState.getMoney()) {
-                // Return a special exception or status that UI can handle to show overlay
-                // Treating "Not enough money" as a fail condition here.
-                throw new GameException("NOT_ENOUGH_MONEY_FOR_BID");
-            }
-            gameState.addInventory(biddingItem);
-            gameState.setMoney(gameState.getMoney() - playerBid);
-            result = BiddingResult.win(playerBid, dealerBid);
-        } else {
-            result = BiddingResult.lose(playerBid, dealerBid);
+        // Player auto-wins if their bid meets or exceeds the dealer's absolute max
+        if (newPlayerBid >= dealerMaxBid) {
+            this.currentPlayerBid = newPlayerBid;
+            return BiddingResult.win(this.currentPlayerBid, this.currentDealerBid); // Player wins outright
         }
 
-        // Do not clear biddingItem immediately if we want to show result UI
-        return result;
+        // Dealer makes a counter-offer
+        int dealerCounterBid = dealer.bid(currentBiddingItem, gameState.getRound(), newPlayerBid);
+
+        // If dealer's counter is less than or equal to player's bid, player wins
+        // (dealer reached their limit or logic decided not to bid higher)
+        if (dealerCounterBid <= newPlayerBid) {
+            this.currentPlayerBid = newPlayerBid;
+            this.currentDealerBid = dealerCounterBid;
+            return BiddingResult.win(this.currentPlayerBid, this.currentDealerBid);
+        }
+
+        // Auction continues, return the new state
+        this.currentPlayerBid = newPlayerBid;
+        this.currentDealerBid = dealerCounterBid;
+        return BiddingResult.ongoing(this.currentPlayerBid, this.currentDealerBid);
     }
+
+    public BiddingResult playerSkips() {
+        // Player skips, they lose the auction.
+        return BiddingResult.lose(this.currentPlayerBid, this.currentDealerBid);
+    }
+
 
     public List<SpecialCard> getShopItems() {
         return shopItems;
@@ -94,6 +105,10 @@ public class Phase2Game {
     }
 
     public SpecialCard getBiddingItem() {
-        return biddingItem;
+        return currentBiddingItem;
+    }
+
+    public int getDealerBid() {
+        return this.currentDealerBid;
     }
 }

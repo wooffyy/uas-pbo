@@ -1,14 +1,12 @@
 package model.entity.dealer;
 
 import core.Rules;
-import model.card.Card;
-import model.card.SpecialCard;
-import model.card.Suit;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import model.card.Card;
+import model.card.Suit;
 
 public class EconomistBoss extends BossDealer {
 
@@ -17,10 +15,8 @@ public class EconomistBoss extends BossDealer {
     }
 
     @Override
-    public int bid(SpecialCard biddingItem, int round) {
-        int base = biddingItem.getPrice();
-        int max = 120;
-        return Math.min(max, base + new Random().nextInt(20));
+    public int getMaxBid() {
+        return 100;
     }
 
     @Override

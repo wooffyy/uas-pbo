@@ -256,11 +256,16 @@ public class GameManager {
         return switch (stage) {
             case 1 -> new Dealer("INTRO BOSS", rng) {
                 @Override
-                public int bid(SpecialCard biddingItem, int round) {
-                    // Logic: Cap at 40, minimum base price + small random
-                    int base = biddingItem.getPrice();
-                    int max = 40;
-                    return Math.min(max, base + new Random().nextInt(10));
+                public int bid(SpecialCard biddingItem, int round, int playerBid) {
+                    // New logic: re-bid 2-10 more than player, max 20
+                    int rebidAmount = 2 + rng.nextInt(9); // 2-10
+                    int dealerBid = playerBid + rebidAmount;
+                    return Math.min(dealerBid, 20);
+                }
+
+                @Override
+                public int getMaxBid() {
+                    return 20;
                 }
 
                 @Override

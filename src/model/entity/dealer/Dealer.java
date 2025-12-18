@@ -1,15 +1,14 @@
 package model.entity.dealer;
 
-import model.card.Card;
-import model.card.SpecialCard;
-
 import java.util.List;
 import java.util.Random;
+import model.card.Card;
+import model.card.SpecialCard;
 
 public abstract class Dealer {
     private int tricksWon;
     private String name;
-    private Random rng;
+    protected Random rng;
     private int rankModifier = 0;
 
     public Dealer(String name, Random rng) {
@@ -18,7 +17,9 @@ public abstract class Dealer {
         this.tricksWon = 0;
     }
 
-    public abstract int bid(SpecialCard biddingItem, int round);
+    public abstract int bid(SpecialCard biddingItem, int round, int playerBid);
+
+    public abstract int getMaxBid();
 
     // The dealer's hand is now passed in as an argument
     public abstract Card chooseCard(Card playerCard, List<Card> dealerHand);

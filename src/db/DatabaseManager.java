@@ -1,15 +1,13 @@
 // Connection (JDBC), CRUD untuk game state & inventory
 package db;
 
+import java.sql.*;
+import model.card.EffectTrigger;
+import model.card.EffectType;
+import model.card.Rarity;
+import model.card.SpecialCard;
 import model.state.GameState;
 import model.state.PlayerInventory;
-import model.card.SpecialCard;
-import model.card.EffectType;
-import model.card.EffectTrigger;
-import model.card.Rarity;
-
-import java.sql.*;
-import java.util.List;
 
 public class DatabaseManager {
 
