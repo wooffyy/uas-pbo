@@ -91,7 +91,7 @@ public class Phase1ResultPanel extends JPanel {
     public void updateResults() {
         GameState state = gameManager.getGameState();
         Phase1Game phase1 = gameManager.getPhase1Game();
-        DecimalFormat df = new DecimalFormat("#.##");
+        DecimalFormat df = new DecimalFormat("#.###");
 
         resultTitleLabel.setText(phase1.isWin() ? "YOU WIN!" : "YOU LOSE!");
         resultTitleLabel.setForeground(phase1.isWin() ? new Color(0, 200, 0) : Color.RED);

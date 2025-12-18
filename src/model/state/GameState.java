@@ -5,6 +5,8 @@ import model.card.*;
 import model.entity.Player;
 import model.entity.dealer.Dealer;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -195,9 +197,19 @@ public class GameState {
 
     public double applyDebtInterest() {
         double added = Rules.calculateInterest(debt, interestRate);
-        this.lastInterestAdded = added;
-        debt += added;
-        return debt;
+        double newDebt = this.debt + added;
+
+        // Round the new total debt to 3 decimal places using HALF_UP rounding
+        BigDecimal newDebtBd = new BigDecimal(String.valueOf(newDebt));
+        BigDecimal roundedNewDebtBd = newDebtBd.setScale(3, RoundingMode.HALF_UP);
+
+        // Store the rounded interest amount for display purposes
+        this.lastInterestAdded = roundedNewDebtBd.doubleValue() - this.debt;
+
+        // Update the debt to the new rounded value
+        this.debt = roundedNewDebtBd.doubleValue();
+
+        return this.debt;
     }
 
     public boolean payDebt(int amount) {
