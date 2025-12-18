@@ -71,6 +71,47 @@ public class UIWindow extends JFrame {
     /** Pindah antar view */
     public void switchView(String viewName) {
         cardLayout.show(mainPanel, viewName);
+
+        // Handle BGM Switching
+        ui.util.SoundManager sm = ui.util.SoundManager.getInstance();
+
+        switch (viewName) {
+            case MENU_VIEW:
+            case CARD_COLLECTION_VIEW:
+                sm.play("MainMenu");
+                break;
+            case PHASE2_VIEW: // Shop
+            case BIDDING_VIEW:
+                sm.play("Shop");
+                break;
+            case PHASE1_VIEW:
+                // Check current round/dealer to determine BGM
+                if (gameManager != null) {
+                    int round = gameManager.getGameState().getRound();
+                    if (round == 1)
+                        sm.play("IntroBoss");
+                    else if (round == 2)
+                        sm.play("Tactician");
+                    else if (round == 3)
+                        sm.play("Economic");
+                    else
+                        sm.play("FinalBoss");
+                }
+                break;
+            case PHASE1_RESULT_VIEW:
+                sm.play("Death"); // "Menang atau kalah" -> Result screen
+                break;
+            case GAME_OVER_VIEW:
+                sm.play("Death");
+                break;
+            default:
+                // For any other views not explicitly handled, stop BGM or keep previous
+                // For now, let's assume we stop or keep previous if no specific BGM is
+                // assigned.
+                // sm.stopBGM(); // Or do nothing to keep current BGM
+                break;
+        }
+
         // Refresh Phase1Panel whenever it's shown
         if (viewName.equals(PHASE1_VIEW) && phase1Panel != null) {
             phase1Panel.refresh();
