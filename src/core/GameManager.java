@@ -248,6 +248,11 @@ public class GameManager {
         phase2.loadShop();
         phase2.rollBiddingItem();
         ui.switchView(UIWindow.PHASE2_VIEW);
+
+        // Refresh the shop UI to ensure it displays new items
+        if (ui.getPhase2ShopPanel() != null) {
+            ui.getPhase2ShopPanel().resetShop();
+        }
     }
 
     public void onPhase2Finish() {

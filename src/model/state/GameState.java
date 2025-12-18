@@ -109,7 +109,7 @@ public class GameState {
         this.playerHealth = 3;
         this.playerMoney = 0;
         this.debt = 1000;
-        this.interestRate = 0.001;
+        this.interestRate = 0.10;
         this.inventory.clear();
         this.gameOver = false;
         this.phase1Won = false;
@@ -142,6 +142,7 @@ public class GameState {
 
     public void increaseRound() {
         this.round++;
+        this.interestRate += 0.10; // Increase interest by 10% each stage
     }
 
     public void setRound(int round) {
@@ -276,7 +277,7 @@ public class GameState {
     public void setSeed(long seed) {
         this.seed = seed;
     }
-    
+
     public double getLastInterestAdded() {
         return lastInterestAdded;
     }

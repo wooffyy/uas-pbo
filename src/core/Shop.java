@@ -38,12 +38,27 @@ public class Shop {
     public List<SpecialCard> rollBiddingOptions(int round) {
         List<SpecialCard> options = new ArrayList<>();
 
-        // Helper to roll specific rarity
-        options.add(rollByRarity(Rarity.RARE, round));
-        options.add(rollByRarity(Rarity.SUPER_RARE, round));
-        options.add(rollByRarity(Rarity.LEGENDARY, round));
+        for (int i = 0; i < 3; i++) {
+            options.add(rollRandomBiddingCard(round));
+        }
 
         return options;
+    }
+
+    private SpecialCard rollRandomBiddingCard(int round) {
+        double r = random.nextDouble();
+        Rarity target;
+
+        // 70% Rare, 20% Super Rare, 10% Legendary
+        if (r < 0.70) {
+            target = Rarity.RARE;
+        } else if (r < 0.90) { // 0.70 + 0.20
+            target = Rarity.SUPER_RARE;
+        } else {
+            target = Rarity.LEGENDARY;
+        }
+
+        return rollByRarity(target, round);
     }
 
     private SpecialCard rollByRarity(Rarity rarity, int round) {
@@ -52,19 +67,14 @@ public class Shop {
                 .collect(Collectors.toList());
 
         if (pool.isEmpty()) {
-            // Fallback: pick any and force rarity (or just return random)
-            // Ideally pools shouldn't be empty.
-            SpecialCard fallback = itemPool.get(random.nextInt(itemPool.size()));
-            SpecialCard copy = new SpecialCard(fallback);
-            copy.setPrice(20); // Base price fixed at 20 as per request
-            return copy;
+            // Fallback if pool is empty for that rarity
+            pool = itemPool;
         }
 
         SpecialCard base = pool.get(random.nextInt(pool.size()));
         SpecialCard copy = new SpecialCard(base);
-        // User request: "harga dasar tiap kartu adalah $20" regarding the bidding base
-        // price
-        copy.setPrice(20);
+        copy.setRarity(rarity); // Ensure applied rarity matches
+        copy.setPrice(20); // Base price fixed at 20
         return copy;
     }
 

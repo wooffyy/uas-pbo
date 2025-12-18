@@ -65,6 +65,10 @@ public class UIWindow extends JFrame {
 
         // ================= FINAL SETUP =================
         cardLayout.show(mainPanel, MENU_VIEW);
+
+        // Start BGM immediately on main menu
+        ui.util.SoundManager.getInstance().play("MainMenu");
+
         setVisible(true);
     }
 

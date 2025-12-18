@@ -61,6 +61,11 @@ public class Phase2ShopPanel extends JPanel {
         }
     }
 
+    public void resetShop() {
+        rollShop();
+        renderShop();
+    }
+
     public void refresh() {
         if (moneyLabel != null) {
             moneyLabel.setText("$" + GameManager.getInstance().getGameState().getMoney());
@@ -75,13 +80,21 @@ public class Phase2ShopPanel extends JPanel {
         if (debtLabel != null) {
             debtLabel.setText("$" + GameManager.getInstance().getGameState().getDebt());
         }
+        if (interestLabel != null) {
+            interestLabel.setText((int) (GameManager.getInstance().getGameState().getInterestRate() * 100) + "%");
+        }
+        if (interestAmountLabel != null) {
+            double added = GameManager.getInstance().getGameState().getLastInterestAdded();
+            interestAmountLabel.setText("(+$" + String.format("%.1f", added) + ")");
+        }
         if (abilitiesPanel != null) {
             abilitiesPanel.refresh(GameManager.getInstance().getGameState());
         }
-        renderShop(); // Refresh shop to update button states if needed
+        renderShop();
     }
 
-    /* ===================== SIDEBAR ===================== */
+    // ... sidebar creation ...
+    private JLabel interestAmountLabel; // New Label
 
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
@@ -107,12 +120,22 @@ public class Phase2ShopPanel extends JPanel {
         interestLabel.setForeground(ACCENT_YELLOW);
         sidebar.add(infoLabel("INTEREST RATE", interestLabel));
 
+        // Show actual amount added (Last Interest Added)
+        double added = GameManager.getInstance().getGameState().getLastInterestAdded();
+        interestAmountLabel = new JLabel("(+$" + String.format("%.1f", added) + ")", SwingConstants.RIGHT);
+        interestAmountLabel.setForeground(new Color(255, 100, 100)); // Red-ish for added debt
+        interestAmountLabel.setFont(new Font("Monospaced", Font.ITALIC, 11));
+
+        JPanel intPanel = infoLabel("LAST INTEREST", interestAmountLabel);
+        sidebar.add(intPanel);
+
         moneyLabel = new JLabel("$" + GameManager.getInstance().getGameState().getMoney(), SwingConstants.RIGHT);
         moneyLabel.setForeground(ACCENT_YELLOW);
         sidebar.add(infoLabel("PLAYER MONEY", moneyLabel));
 
         sidebar.add(Box.createVerticalStrut(15));
 
+        // ... rest of sidebar ...
         healthLabel = new JLabel();
         healthLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
         healthLabel.setForeground(Color.RED);

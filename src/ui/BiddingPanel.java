@@ -31,7 +31,7 @@ public class BiddingPanel extends JPanel {
 
     // Bidding Controls
     private int currentPlayerBid = 0;
-    private JLabel bidValueLabel;
+    private JTextField bidValueField; // Changed from JLabel to JTextField
     private JLabel dealerBidLabel;
 
     enum State {
@@ -185,7 +185,6 @@ public class BiddingPanel extends JPanel {
 
         arenaPanel.add(topPanel, BorderLayout.NORTH);
 
-
         // --- CENTER: CARD ---
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setOpaque(false);
@@ -211,26 +210,57 @@ public class BiddingPanel extends JPanel {
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
         controls.setOpaque(false);
 
-        JButton minus = new JButton("-");
+        JButton minus = new JButton("◀"); // Triangle pointing left
         styleControlIcon(minus);
-        minus.addActionListener(e -> adjustBid(-10)); // Increment by 10 for speed
+        minus.addActionListener(e -> adjustBid(-10));
 
-        // Value Layout
+        // Value Layout - now using JTextField
         JPanel valuePanel = new JPanel(new BorderLayout());
         valuePanel.setOpaque(false);
 
-        bidValueLabel = new JLabel(String.valueOf(currentPlayerBid), SwingConstants.CENTER);
-        bidValueLabel.setFont(new Font("Arial", Font.BOLD, 40));
-        bidValueLabel.setForeground(Color.WHITE);
+        bidValueField = new JTextField(String.valueOf(currentPlayerBid));
+        bidValueField.setFont(new Font("Arial", Font.BOLD, 40));
+        bidValueField.setForeground(Color.WHITE);
+        bidValueField.setBackground(BG_DARK);
+        bidValueField.setHorizontalAlignment(JTextField.CENTER);
+        bidValueField.setBorder(null);
+        bidValueField.setPreferredSize(new Dimension(150, 50));
+        bidValueField.setCaretColor(Color.WHITE);
+
+        // Add action listener for Enter key
+        bidValueField.addActionListener(e -> {
+            try {
+                int val = Integer.parseInt(bidValueField.getText());
+                if (val < 0)
+                    val = 0;
+                currentPlayerBid = val;
+            } catch (NumberFormatException ex) {
+                bidValueField.setText(String.valueOf(currentPlayerBid));
+            }
+        });
+
+        // Focus listener to update when user clicks away
+        bidValueField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                try {
+                    int val = Integer.parseInt(bidValueField.getText());
+                    if (val < 0)
+                        val = 0;
+                    currentPlayerBid = val;
+                } catch (NumberFormatException ex) {
+                    bidValueField.setText(String.valueOf(currentPlayerBid));
+                }
+            }
+        });
 
         JSeparator line = new JSeparator();
         line.setForeground(Color.WHITE);
         line.setPreferredSize(new Dimension(150, 2));
 
-        valuePanel.add(bidValueLabel, BorderLayout.CENTER);
+        valuePanel.add(bidValueField, BorderLayout.CENTER);
         valuePanel.add(line, BorderLayout.SOUTH);
 
-        JButton plus = new JButton("+");
+        JButton plus = new JButton("▶"); // Triangle pointing right
         styleControlIcon(plus);
         plus.addActionListener(e -> adjustBid(10));
 
@@ -276,15 +306,29 @@ public class BiddingPanel extends JPanel {
         currentPlayerBid += amount;
         if (currentPlayerBid < 0)
             currentPlayerBid = 0;
-        bidValueLabel.setText(String.valueOf(currentPlayerBid));
+        bidValueField.setText(String.valueOf(currentPlayerBid));
     }
 
     private void submitBid() {
+        // Parse current text field value first
+        try {
+            int val = Integer.parseInt(bidValueField.getText());
+            if (val < 0)
+                val = 0;
+            currentPlayerBid = val;
+        } catch (NumberFormatException ex) {
+            bidValueField.setText(String.valueOf(currentPlayerBid));
+        }
+
         GameState gs = GameManager.getInstance().getGameState();
         Phase2Game p2 = GameManager.getInstance().getPhase2Game();
 
+        // Safe insufficient funds check - just show warning, don't skip
         if (gs.getMoney() < currentPlayerBid) {
-            showOverlay("Uang anda kurang untuk melakukan bid ini.");
+            JOptionPane.showMessageDialog(this,
+                    "Uang anda kurang untuk melakukan bid ini.",
+                    "Uang Kurang",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -292,15 +336,18 @@ public class BiddingPanel extends JPanel {
             BiddingResult result = p2.placePlayerBid(currentPlayerBid);
 
             if (result.getStatus() == BiddingResult.Status.WIN) {
-                String message = String.format("You won the auction!\nYour bid: $%d\nDealer's bid: $%d", result.getPlayerBid(), result.getDealerBid());
+                String message = String.format("You won the auction!\nYour bid: $%d\nDealer's bid: $%d",
+                        result.getPlayerBid(), result.getDealerBid());
                 JOptionPane.showMessageDialog(this, message, "Victory", JOptionPane.INFORMATION_MESSAGE);
                 addCardToInventory(p2.getBiddingItem(), result.getPlayerBid());
             } else if (result.getStatus() == BiddingResult.Status.ONGOING) {
                 // Dealer has re-bid, update UI to show the new state
-                String message = String.format("The dealer outbid you!\nTheir new bid is $%d. Place a higher bid or skip.", result.getDealerBid());
+                String message = String.format(
+                        "The dealer outbid you!\nTheir new bid is $%d. Place a higher bid or skip.",
+                        result.getDealerBid());
                 JOptionPane.showMessageDialog(this, message, "Outbid!", JOptionPane.INFORMATION_MESSAGE);
                 currentPlayerBid = result.getDealerBid() + 10; // Suggest a new bid
-                bidValueLabel.setText(String.valueOf(currentPlayerBid));
+                bidValueField.setText(String.valueOf(currentPlayerBid));
                 dealerBidLabel.setText("Dealer's Bid: $" + result.getDealerBid());
             }
             // The 'LOSE' case is handled by the player explicitly skipping.
@@ -366,7 +413,8 @@ public class BiddingPanel extends JPanel {
         // If player skips, it's a loss.
         Phase2Game p2 = GameManager.getInstance().getPhase2Game();
         BiddingResult result = p2.playerSkips();
-        String message = String.format("You skipped the auction and lost.\nYour last bid: $%d\nDealer's bid: $%d", result.getPlayerBid(), result.getDealerBid());
+        String message = String.format("You skipped the auction and lost.\nYour last bid: $%d\nDealer's bid: $%d",
+                result.getPlayerBid(), result.getDealerBid());
         JOptionPane.showMessageDialog(this, message, "Auction Lost", JOptionPane.INFORMATION_MESSAGE);
         GameManager.getInstance().onPhase2Finish(); // Proceed to next game phase
     }

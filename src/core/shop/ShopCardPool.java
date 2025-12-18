@@ -19,11 +19,10 @@ public class ShopCardPool {
          * =========================
          */
 
-        // Chance muncul di shop
-        private static final double COMMON_CHANCE = 0.60;
-        private static final double RARE_CHANCE = 0.25;
+        // Chance muncul di shop (NO LEGENDARY IN SHOP!)
+        private static final double COMMON_CHANCE = 0.70;
+        private static final double RARE_CHANCE = 0.20;
         private static final double SUPER_RARE_CHANCE = 0.10;
-        private static final double LEGENDARY_CHANCE = 0.05;
 
         /*
          * =========================
