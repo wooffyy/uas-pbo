@@ -12,7 +12,12 @@ import model.card.Suit;
 public class TacticianBoss extends BossDealer {
 
     public TacticianBoss(Random rng) {
-        super("TACTICIAN", rng);
+        super("Tactician Boss", rng);
+    }
+
+    @Override
+    public boolean isTactician() {
+        return true;
     }
 
     @Override

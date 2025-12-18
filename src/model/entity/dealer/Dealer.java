@@ -47,4 +47,17 @@ public abstract class Dealer {
     public void resetTricks() {
         this.tricksWon = 0;
     }
+
+    // --- SKILL FLAGS ---
+    public boolean isTactician() {
+        return false;
+    }
+
+    public boolean isEconomist() {
+        return false;
+    }
+
+    public boolean isFinalBoss() {
+        return false;
+    }
 }

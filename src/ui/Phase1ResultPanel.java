@@ -35,7 +35,7 @@ public class Phase1ResultPanel extends JPanel {
 
     private void initComponents() {
         // Title
-        resultTitleLabel = new JLabel("PHASE 1 RESULTS", SwingConstants.CENTER);
+        resultTitleLabel = new JLabel("RESULTS", SwingConstants.CENTER);
         resultTitleLabel.setFont(new Font("Monospaced", Font.BOLD, 48));
         resultTitleLabel.setForeground(new Color(255, 200, 0)); // Gold color
         add(resultTitleLabel, BorderLayout.NORTH);
@@ -47,7 +47,7 @@ public class Phase1ResultPanel extends JPanel {
         resultsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         tricksWonLabel = createResultLabel("Tricks Won: 0", Color.WHITE);
-        phaseBonusLabel = createResultLabel("Phase Bonus: $0", new Color(0, 200, 0));
+        phaseBonusLabel = createResultLabel("Bonus: $0", new Color(0, 200, 0));
         moneyFromTricksLabel = createResultLabel("Money from Tricks: $0", new Color(0, 200, 0));
         totalMoneyLabel = createResultLabel("Total Player Money: $0", new Color(255, 200, 0));
         healthStatusLabel = createResultLabel("Health: ♥♥♥", Color.RED);
@@ -69,7 +69,7 @@ public class Phase1ResultPanel extends JPanel {
         add(resultsPanel, BorderLayout.CENTER);
 
         // Continue Button
-        continueButton = new JButton("CONTINUE TO PHASE 2");
+        continueButton = new JButton("CONTINUE");
         continueButton.setFont(new Font("Monospaced", Font.BOLD, 24));
         continueButton.setBackground(new Color(50, 150, 50)); // Greenish button
         continueButton.setForeground(Color.WHITE);
@@ -94,11 +94,11 @@ public class Phase1ResultPanel extends JPanel {
         GameState state = gameManager.getGameState();
         Phase1Game phase1 = gameManager.getPhase1Game();
 
-        resultTitleLabel.setText(phase1.isWin() ? "PHASE 1 COMPLETE!" : "PHASE 1 FAILED!");
+        resultTitleLabel.setText(phase1.isWin() ? "YOU WIN!" : "YOU LOSE!");
         resultTitleLabel.setForeground(phase1.isWin() ? new Color(0, 200, 0) : Color.RED);
 
         tricksWonLabel.setText("Tricks Won: " + phase1.getTricksWon() + " / 13");
-        phaseBonusLabel.setText("Phase Bonus: $" + state.getScorePhase1());
+        phaseBonusLabel.setText("Bonus: $" + state.getScorePhase1());
         moneyFromTricksLabel.setText("Money from Tricks: $" + state.getMoneyFromTricks());
         totalMoneyLabel.setText("Total Player Money: $" + state.getMoney());
         healthStatusLabel.setText("Health: " + "♥".repeat(Math.max(0, state.getPlayerHealth())));
@@ -112,7 +112,7 @@ public class Phase1ResultPanel extends JPanel {
             continueButton.setBackground(Color.RED.darker());
             continueButton.addActionListener(e -> parentFrame.switchView(UIWindow.MENU_VIEW));
         } else {
-            continueButton.setText("CONTINUE TO PHASE 2");
+            continueButton.setText("CONTINUE");
             continueButton.setBackground(new Color(50, 150, 50));
         }
     }

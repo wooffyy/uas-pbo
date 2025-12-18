@@ -45,6 +45,43 @@ public class GameManager {
             return;
         }
 
+        // --- BOSS SKILL: TACTICIAN (Forced Commitment) ---
+        // Trigger: Tricks 4 & 5 (Indices 3 & 4)
+        Dealer dealer = gameState.getCurrentDealer();
+        int currentTrickIndex = phase1.getTricksWon() + phase1.getTricksLost() + 1; // 1-based index
+
+        if (dealer != null && dealer.isTactician()) {
+            // Logic: "After 3 tricks" -> Tricks 4 and 5.
+            if (currentTrickIndex == 4 || currentTrickIndex == 5) {
+                List<Card> hand = gameState.getPlayerHand();
+                Card maxCard = null;
+
+                // If following suit, must play highest of that suit
+                if (gameState.isDealerLeadsTrick()) {
+                    Suit leadSuit = gameState.getCurrentLeadCard().getSuit();
+                    List<Card> follow = hand.stream().filter(c -> c.getSuit() == leadSuit).collect(Collectors.toList());
+                    if (!follow.isEmpty()) {
+                        maxCard = follow.stream().max(Comparator.comparingInt(Rules::scoreCard))
+                                .orElse(null);
+                    }
+                }
+
+                // If not following suit (or leading), must play highest overall
+                if (maxCard == null) {
+                    maxCard = hand.stream().max(Comparator.comparingInt(Rules::scoreCard)).orElse(null);
+                }
+
+                // Logic: You must play a card that is EQUAL to the max value (allow ties)
+                // If the played card is WEAKER than the max card, block it.
+                if (maxCard != null && Rules.scoreCard(card) < Rules.scoreCard(maxCard)) {
+                    ui.showNotification(
+                            "TACTICIAN SKILL: Forced Commitment!\nYou must play your highest available card ("
+                                    + maxCard.getName() + " or equivalent)!");
+                    return;
+                }
+            }
+        }
+
         gameState.getPlayerHand().remove(card);
         gameState.setPlayerPlayedCard(card);
 
@@ -55,7 +92,7 @@ public class GameManager {
 
         // If player leads, now dealer plays
         if (!gameState.isDealerLeadsTrick()) {
-            Dealer dealer = gameState.getCurrentDealer();
+            // Dealer dealer = gameState.getCurrentDealer(); // Already got above
             Card dealerCard = dealer.chooseCard(card, gameState.getDealerHand());
 
             if (dealerCard != null) {
@@ -86,8 +123,17 @@ public class GameManager {
     }
 
     private void resolveTrick(Card playerCard, Card dealerCard) {
+        Dealer dealer = gameState.getCurrentDealer();
+        int currentTrickNum = phase1.getTricksWon() + phase1.getTricksLost() + 1;
+
+        // BOSS NOTIFICATIONS (ONCE PER SKILL TRIGGER)
+        if (dealer.isEconomist() && currentTrickNum == 5) {
+            ui.showNotification("ECONOMIST SKILL: Value Drain!\nFrom now on, your card values are reduced by 1!");
+        }
+
         // Use the new Rules.getTrickWinner method
-        boolean playerWins = Rules.getTrickWinner(gameState.getCurrentLeadCard(), playerCard, dealerCard);
+        boolean playerWins = Rules.getTrickWinner(gameState.getCurrentLeadCard(), playerCard, dealerCard, dealer,
+                currentTrickNum);
 
         if (playerWins) {
             phase1.playerWinsTrick(playerCard, dealerCard);
@@ -176,10 +222,10 @@ public class GameManager {
                 return;
             }
         }
-        
+
         // Apply interest before showing results
         gameState.applyDebtInterest();
-        
+
         // Instead of proceeding to debt payment, show the result panel
         ui.switchView(UIWindow.PHASE1_RESULT_VIEW);
         ui.getPhase1ResultPanel().updateResults();
@@ -328,7 +374,6 @@ public class GameManager {
         phase2.rollBiddingItem();
         ui.switchView(UIWindow.BIDDING_VIEW);
     }
-
 
     public static GameManager getInstance() {
         return instance;

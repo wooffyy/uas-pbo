@@ -38,6 +38,10 @@ public class Phase2Game {
         gameState.addInventory(item);
         gameState.decreaseMoney(item.getPrice());
         shopItems.remove(item);
+
+        // Unlock card in collection
+        db.DatabaseManager.unlockCard(item.getId());
+
         return true;
     }
 
@@ -70,6 +74,10 @@ public class Phase2Game {
         // Player auto-wins if their bid meets or exceeds the dealer's absolute max
         if (newPlayerBid >= dealerMaxBid) {
             this.currentPlayerBid = newPlayerBid;
+            // Unlock card in collection (Win outright)
+            if (currentBiddingItem != null) {
+                db.DatabaseManager.unlockCard(currentBiddingItem.getId());
+            }
             return BiddingResult.win(this.currentPlayerBid, this.currentDealerBid); // Player wins outright
         }
 
@@ -81,6 +89,10 @@ public class Phase2Game {
         if (dealerCounterBid <= newPlayerBid) {
             this.currentPlayerBid = newPlayerBid;
             this.currentDealerBid = dealerCounterBid;
+            // Unlock card in collection (Win by counter)
+            if (currentBiddingItem != null) {
+                db.DatabaseManager.unlockCard(currentBiddingItem.getId());
+            }
             return BiddingResult.win(this.currentPlayerBid, this.currentDealerBid);
         }
 
@@ -94,7 +106,6 @@ public class Phase2Game {
         // Player skips, they lose the auction.
         return BiddingResult.lose(this.currentPlayerBid, this.currentDealerBid);
     }
-
 
     public List<SpecialCard> getShopItems() {
         return shopItems;

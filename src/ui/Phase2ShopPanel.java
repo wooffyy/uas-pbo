@@ -313,6 +313,10 @@ public class Phase2ShopPanel extends JPanel {
         // Mark slot as sold (null) instead of shifting
         shopSlots[index] = null;
 
+        // UNLOCK PERMANENTLY IN COLLECTION
+        db.DatabaseManager.unlockCard(card.getId());
+        System.out.println("Shop purchase: Unlocking card " + card.getName() + " (ID: " + card.getId() + ")");
+
         refresh(); // Refresh labels and abilities panel
     }
 

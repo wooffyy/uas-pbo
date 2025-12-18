@@ -1,28 +1,40 @@
-// Connection (JDBC), CRUD untuk game state & inventory
 package db;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import model.card.EffectTrigger;
 import model.card.EffectType;
 import model.card.Rarity;
 import model.card.SpecialCard;
-import model.state.GameState;
-import model.state.PlayerInventory;
+import core.shop.ShopCardPool;
 
 public class DatabaseManager {
 
-    private static final String DB_URL  = "jdbc:mysql://localhost:3306/card_game";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/card_game";
     private static final String DB_USER = "root";
     private static final String DB_PASS = "";
 
     private static Connection connection;
 
     // =========================================================
-    // 1. METHOD WAJIB (TIDAK DIUBAH)
+    // 1. CONNECTION MANAGEMENT
     // =========================================================
 
     public static void connect() throws SQLException {
         if (connection == null || connection.isClosed()) {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            } catch (ClassNotFoundException e) {
+                // Try legacy driver if new one fails, or just throw helpful error
+                try {
+                    Class.forName("com.mysql.jdbc.Driver");
+                } catch (ClassNotFoundException ex) {
+                    throw new SQLException(
+                            "MySQL JDBC Driver not found. Please ensure the mysql-connector library is added to your project classpath.",
+                            ex);
+                }
+            }
             connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
         }
     }
@@ -32,117 +44,120 @@ public class DatabaseManager {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
             }
-        } catch (SQLException ignored) {}
-    }
-
-    public static ResultSet executeQuerry(String sql) throws SQLException {
-        connect();
-        Statement stmt = connection.createStatement();
-        return stmt.executeQuery(sql);
-    }
-
-    public static int executeUpdate(String sql) throws SQLException {
-        connect();
-        Statement stmt = connection.createStatement();
-        return stmt.executeUpdate(sql);
+        } catch (SQLException ignored) {
+        }
     }
 
     private static Connection getConnection() throws SQLException {
         connect();
+        seedSpecialCardData(); // Ensure data exists
         return connection;
     }
 
-    // =========================================================
-    // 2. SAVE GAME STATE
-    // =========================================================
+    private static void seedSpecialCardData() {
+        if (connection == null)
+            return;
 
-    public static void saveState(GameState state) throws SQLException {
-        connect();
+        System.out.println("Seeding/Syncing special_card_data table from ShopCardPool...");
+        List<SpecialCard> allCards = ShopCardPool.getAllCards();
 
-        String sqlPlayer = """
-            UPDATE player_state
-            SET money = ?, health = ?, debt = ?, interest_rate = ?, round = ?, seed = ?, current_dealer = ?
-            WHERE id = 1
-        """;
+        // Use REPLACE INTO or ON DUPLICATE KEY UPDATE to ensure we sync new IDs/Updates
+        String sql = """
+                    INSERT INTO special_card_data (id, name, effect_type, effect_trigger, price, rarity, description)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                    name=VALUES(name),
+                    effect_type=VALUES(effect_type),
+                    effect_trigger=VALUES(effect_trigger),
+                    price=VALUES(price),
+                    rarity=VALUES(rarity),
+                    description=VALUES(description)
+                """;
 
-        try (PreparedStatement ps = getConnection().prepareStatement(sqlPlayer)) {
-            ps.setInt(1, state.getMoney());
-            ps.setInt(2, state.getPlayerHealth());
-            ps.setInt(3, state.getDebt());
-            ps.setDouble(4, state.getInterestRate());
-            ps.setInt(5, state.getRound());
-            ps.setLong(6, state.getSeed());
-            ps.setString(7, state.getCurrentDealer().getName());
-            ps.executeUpdate();
-        }
-
-        // reset inventory
-        executeUpdate("DELETE FROM inventory");
-
-        String sqlInv = "INSERT INTO inventory (special_card_id, quantity) VALUES (?, ?)";
-
-        PlayerInventory inventory = state.getInventory();
-        if (inventory == null) return;
-
-        try (PreparedStatement ps = getConnection().prepareStatement(sqlInv)) {
-            for (SpecialCard card : inventory.getCards()) {
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (SpecialCard card : allCards) {
                 ps.setInt(1, card.getId());
-                ps.setInt(2, 1); // quantity FIXED = 1 (inventory list handles ownership)
+                ps.setString(2, card.getName());
+                ps.setString(3, card.getEffectType().name());
+                // Handle potential null trigger if not set in pool (ShopCardPool seems to set
+                // it though)
+                ps.setString(4, card.getEffectTrigger() != null ? card.getEffectTrigger().name() : "ON_ROUND");
+                ps.setInt(5, card.getPrice());
+                ps.setString(6, card.getRarity().name().replace("_", " ")); // Fix: Convert SUPER_RARE -> SUPER RARE
+                ps.setString(7, card.getDescription());
                 ps.addBatch();
             }
             ps.executeBatch();
+            System.out.println("Seeding complete. Synced " + allCards.size() + " cards.");
+        } catch (SQLException e) {
+            System.err.println("Error seeding special_card_data: " + e.getMessage());
         }
     }
 
     // =========================================================
-    // 3. LOAD GAME STATE
+    // 2. COLLECTION MANAGEMENT (UNLOCK CARDS)
     // =========================================================
 
-    public static GameState loadState() throws SQLException {
-        connect();
-
-        GameState state = new GameState(); 
-
-        // ---- player_state
-        try (ResultSet rs = executeQuerry("SELECT * FROM player_state WHERE id = 1")) {
-            if (rs.next()) {
-                state.setMoney(rs.getInt("money"));
-                state.setPlayerHealth(rs.getInt("health"));
-                state.setDebt(rs.getInt("debt"));
-                state.setInterestRate(rs.getDouble("interest_rate"));
-                state.setRound(rs.getInt("round"));
-                state.setSeed(rs.getLong("seed"));
-
-                // dealer akan di-resolve oleh GameManager / factory
-                // state.setCurrentDealer(...)
-            }
+    /**
+     * Unlocks a special card in the database (adds to collection).
+     * If the card is already unlocked, this method does nothing (or catches
+     * duplicate entry).
+     */
+    public static void unlockCard(int specialCardId) {
+        // Ensure data is seeded before trying to link
+        try {
+            seedSpecialCardData();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        // ---- inventory
-        PlayerInventory inventory = new PlayerInventory();
+        String sql = "INSERT IGNORE INTO unlocked_cards (special_card_id) VALUES (?)";
 
-        String sqlInventory = """
-            SELECT s.id, s.name, s.effect_type, s.effect_trigger, s.price, s.rarity, s.description
-            FROM inventory i
-            JOIN special_card_data s ON i.special_card_id = s.id
-        """;
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, specialCardId);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                System.out.println("Unlocked card ID: " + specialCardId + " (NEW)");
+            } else {
+                System.out.println("Unlocked card ID: " + specialCardId + " (ALREADY OWNED)");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error unlocking card: " + e.getMessage());
+        }
+    }
 
-        try (ResultSet rs = executeQuerry(sqlInventory)) {
+    /**
+     * Retrieves all unlocked special cards given their IDs from the database.
+     * Join unlocked_cards with special_card_data to get full card details.
+     */
+    public static List<SpecialCard> getUnlockedCards() {
+        List<SpecialCard> unlockedCards = new ArrayList<>();
+        String sql = """
+                    SELECT s.id, s.name, s.effect_type, s.effect_trigger, s.price, s.rarity, s.description
+                    FROM unlocked_cards u
+                    JOIN special_card_data s ON u.special_card_id = s.id
+                    ORDER BY s.id ASC
+                """;
+
+        try (Statement stmt = getConnection().createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+
             while (rs.next()) {
                 SpecialCard card = new SpecialCard(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    EffectType.valueOf(rs.getString("effect_type")),
-                    EffectTrigger.valueOf(rs.getString("effect_trigger")),
-                    rs.getInt("price"),
-                    Rarity.valueOf(rs.getString("rarity")),
-                    rs.getString("description")
-                );
-                inventory.add(card);
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        EffectType.valueOf(rs.getString("effect_type")),
+                        EffectTrigger.valueOf(rs.getString("effect_trigger")),
+                        rs.getInt("price"),
+                        Rarity.valueOf(rs.getString("rarity").replace(" ", "_")), // Fix: Convert SUPER RARE ->
+                                                                                  // SUPER_RARE
+                        rs.getString("description"));
+                unlockedCards.add(card);
             }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving unlocked cards: " + e.getMessage());
         }
 
-        state.setInventory(inventory);
-        return state;
+        return unlockedCards;
     }
 }

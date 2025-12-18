@@ -12,7 +12,12 @@ import model.card.Suit;
 public class FinalBossDealer extends BossDealer {
 
     public FinalBossDealer(Random rng) {
-        super("FINAL ENFORCER", rng);
+        super("Final Boss", rng);
+    }
+
+    @Override
+    public boolean isFinalBoss() {
+        return true;
     }
 
     @Override

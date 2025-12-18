@@ -20,9 +20,10 @@ public class UIWindow extends JFrame {
 
     // View Panels
     private Phase1Panel phase1Panel;
-    private Phase1ResultPanel phase1ResultPanel; // New field
+    private Phase1ResultPanel phase1ResultPanel;
     private Phase2ShopPanel phase2Panel;
-    private BiddingPanel biddingPanel; // New field
+    private BiddingPanel biddingPanel;
+    private CardCollectionPanel collectionPanel; // Promoted to field
     private GameOverPanel gameOverPanel;
     // other panels can be stored as fields if needed
 
@@ -47,16 +48,16 @@ public class UIWindow extends JFrame {
         // ================= INIT ALL VIEWS =================
         MainMenuPanel menuPanel = new MainMenuPanel(this, gameManager);
         phase1Panel = new Phase1Panel(this, gameManager);
-        phase1ResultPanel = new Phase1ResultPanel(this, gameManager); // Initialize new panel
+        phase1ResultPanel = new Phase1ResultPanel(this, gameManager);
         phase2Panel = new Phase2ShopPanel(this);
         biddingPanel = new BiddingPanel(this);
-        CardCollectionPanel collectionPanel = new CardCollectionPanel(this);
+        collectionPanel = new CardCollectionPanel(this);
         gameOverPanel = new GameOverPanel(this, gameManager);
 
         // ================= REGISTER VIEWS =================
         mainPanel.add(menuPanel, MENU_VIEW);
         mainPanel.add(phase1Panel, PHASE1_VIEW);
-        mainPanel.add(phase1ResultPanel, PHASE1_RESULT_VIEW); // Add new panel
+        mainPanel.add(phase1ResultPanel, PHASE1_RESULT_VIEW);
         mainPanel.add(phase2Panel, PHASE2_VIEW);
         mainPanel.add(biddingPanel, BIDDING_VIEW);
         mainPanel.add(collectionPanel, CARD_COLLECTION_VIEW);
@@ -79,6 +80,8 @@ public class UIWindow extends JFrame {
             phase2Panel.refresh();
         } else if (viewName.equals(BIDDING_VIEW) && biddingPanel != null) {
             biddingPanel.reset();
+        } else if (viewName.equals(CARD_COLLECTION_VIEW) && collectionPanel != null) {
+            collectionPanel.refresh();
         } else if (viewName.equals(GAME_OVER_VIEW) && gameOverPanel != null) {
             gameOverPanel.updateSummary();
         }
@@ -98,5 +101,9 @@ public class UIWindow extends JFrame {
 
     public GameOverPanel getGameOverPanel() {
         return gameOverPanel;
+    }
+
+    public void showNotification(String message) {
+        JOptionPane.showMessageDialog(this, message, "Game Notification", JOptionPane.INFORMATION_MESSAGE);
     }
 }
