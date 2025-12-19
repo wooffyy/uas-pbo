@@ -1,7 +1,11 @@
 package core;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TrickModifier {
     private int playerRankBoost = 0;
+    private int dealerRankBoost = 0; // New field
     private boolean ignoreSuitRule = false;
     private boolean forceFollowSuit = false;
     private boolean forceWin = false;
@@ -10,12 +14,22 @@ public class TrickModifier {
     private double pointMultiplier = 1.0;
     private int flatPointsBonus = 0;
 
+    private List<String> notificationMessages = new ArrayList<>();
+
     public int getPlayerRankBoost() {
         return playerRankBoost;
     }
 
     public void addPlayerRankBoost(int boost) {
         this.playerRankBoost += boost;
+    }
+
+    public int getDealerRankBoost() {
+        return dealerRankBoost;
+    }
+
+    public void addDealerRankBoost(int boost) {
+        this.dealerRankBoost += boost;
     }
 
     public boolean isIgnoreSuitRule() {
@@ -66,7 +80,6 @@ public class TrickModifier {
         this.pointMultiplier *= multiplier;
     }
 
-
     public int getFlatPointsBonus() {
         return flatPointsBonus;
     }
@@ -75,9 +88,7 @@ public class TrickModifier {
         this.flatPointsBonus += bonus;
     }
 
-    private java.util.List<String> notificationMessages = new java.util.ArrayList<>();
-
-    public java.util.List<String> getNotificationMessages() {
+    public List<String> getNotificationMessages() {
         return notificationMessages;
     }
 
@@ -91,6 +102,7 @@ public class TrickModifier {
 
         TrickModifier combined = new TrickModifier();
         combined.addPlayerRankBoost(m1.getPlayerRankBoost() + m2.getPlayerRankBoost());
+        combined.addDealerRankBoost(m1.getDealerRankBoost() + m2.getDealerRankBoost());
         combined.setIgnoreSuitRule(m1.isIgnoreSuitRule() || m2.isIgnoreSuitRule());
         combined.setForceFollowSuit(m1.isForceFollowSuit() || m2.isForceFollowSuit());
         combined.setForceWin(m1.isForceWin() || m2.isForceWin());

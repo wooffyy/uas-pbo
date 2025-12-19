@@ -43,6 +43,7 @@ public final class Rules {
         // Apply Rank Boost
         if (modifier != null) {
             playerValue += modifier.getPlayerRankBoost();
+            dealerValue += modifier.getDealerRankBoost(); // Apply Dealer Rank Boost
         }
 
         // --- BOSS SKILL: ECONOMIST (Value Drain) ---

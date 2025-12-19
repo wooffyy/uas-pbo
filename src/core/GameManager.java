@@ -303,24 +303,26 @@ public class GameManager {
 
         if (phase1.isWin()) {
             gameState.setPhase1Won(true);
-            EffectContext afterStageCtx = new EffectContext(
-                    gameState,
-                    gameState.getRound(),
-                    gameState.getScorePhase1(),
-                    phase1.getCapturedCards());
-            TrickModifier mod = gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
-            
-            if (mod != null) {
-                for (String msg : mod.getNotificationMessages()) {
-                    ui.getPhase1Panel().showNotification(msg);
-                }
-            }
         } else {
             gameState.setPhase1Won(false);
             gameState.decreaseLife();
             if (gameState.isDead()) {
                 gameOver();
                 return;
+            }
+        }
+
+        // Apply AFTER_STAGE effects independently of Win/Loss (e.g. Point Parasite)
+        EffectContext afterStageCtx = new EffectContext(
+                gameState,
+                gameState.getRound(),
+                gameState.getScorePhase1(),
+                phase1.getCapturedCards());
+        TrickModifier mod = gameState.getInventory().applyEffects(afterStageCtx, EffectTrigger.AFTER_STAGE);
+        
+        if (mod != null) {
+            for (String msg : mod.getNotificationMessages()) {
+                ui.getPhase1Panel().showNotification(msg);
             }
         }
 

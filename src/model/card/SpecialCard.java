@@ -70,7 +70,8 @@ public class SpecialCard {
                 triggered = true;
                 break;
             case DEALER_DOOM:
-                gameState.getCurrentDealer().applyRankModifier(-2);
+                modifier.addDealerRankBoost(-2);
+                modifier.addNotificationMessage(name + ": -2 Dealer Rank");
                 triggered = true;
                 break;
 
@@ -137,9 +138,12 @@ public class SpecialCard {
 
             // AFTER_STAGE
             case POINT_PARASITE:
-                if (gameState.getScorePhase1() > 50) {
-                    gameState.setScorePhase1((int) (gameState.getScorePhase1() * 1.3));
-                    modifier.addNotificationMessage(name + ": +30% Total Points");
+                int moneyFromTricks = gameState.getMoneyFromTricks();
+                if (moneyFromTricks > 50) {
+                    int bonus = (int) (moneyFromTricks * 0.3);
+                    gameState.addMoney(bonus); // Award bonus money
+                    // Note: We don't update ScorePhase1 anymore as it's separate from money
+                    modifier.addNotificationMessage(name + ": +30% Bonus (" + bonus + " Money)");
                     triggered = true;
                 }
                 break;

@@ -1,13 +1,12 @@
 package core.shop;
 
-import model.card.SpecialCard;
-import model.card.EffectType;
-import model.card.EffectTrigger;
-import model.card.Rarity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import model.card.EffectTrigger;
+import model.card.EffectType;
+import model.card.Rarity;
+import model.card.SpecialCard;
 
 public class ShopCardPool {
 
@@ -40,20 +39,20 @@ public class ShopCardPool {
                 COMMON_CARDS.add(card(1, "Rank Riser", EffectType.RANK_RISER, EffectTrigger.ON_ROUND,
                                 "Boost rank when losing a trick", 6));
 
-                COMMON_CARDS.add(card(2, "Heart Harvester", EffectType.HEART_HARVESTER, EffectTrigger.AFTER_STAGE,
+                COMMON_CARDS.add(card(2, "Heart Harvester", EffectType.HEART_HARVESTER, EffectTrigger.AFTER_ROUND,
                                 "Reduce debt for each Heart captured", 4));
 
                 COMMON_CARDS.add(card(3, "Spade Sneak", EffectType.SPADE_SNEAK, EffectTrigger.ON_ROUND,
                                 "Ignore suit rule with Spades", 6));
 
-                COMMON_CARDS.add(card(4, "Club Crusher", EffectType.CLUB_CRUSHER, EffectTrigger.AFTER_STAGE,
+                COMMON_CARDS.add(card(4, "Club Crusher", EffectType.CLUB_CRUSHER, EffectTrigger.AFTER_ROUND,
                                 "Gain extra points from Clubs", 4));
 
-                COMMON_CARDS.add(card(5, "Diamond Dealer", EffectType.DIAMOND_DEALER, EffectTrigger.AFTER_STAGE,
+                COMMON_CARDS.add(card(5, "Diamond Dealer", EffectType.DIAMOND_DEALER, EffectTrigger.AFTER_ROUND,
                                 "Diamond captured: -0,1 interest each", 5));
 
-                COMMON_CARDS.add(card(6, "Low Lifter", EffectType.LOW_LIFTER, EffectTrigger.BEFORE_ROUND,
-                                "Boost low-rank cards", 6));
+                COMMON_CARDS.add(card(6, "Low Lifter", EffectType.LOW_LIFTER, EffectTrigger.ON_ROUND,
+                                "Boost rank when losing a trick", 6));
 
                 COMMON_CARDS.add(card(7, "Ten Taker", EffectType.TEN_TAKER, EffectTrigger.AFTER_ROUND,
                                 "Bonus points when 10 is involved", 6));
@@ -62,7 +61,7 @@ public class ShopCardPool {
                 RARE_CARDS.add(card(101, "Suit Swapper", EffectType.SUIT_SWAPPER, EffectTrigger.ON_ROUND,
                                 "Force suit matching under conditions", 12));
 
-                RARE_CARDS.add(card(102, "High Hijack", EffectType.HIGH_HIJACK, EffectTrigger.AFTER_STAGE,
+                RARE_CARDS.add(card(102, "High Hijack", EffectType.HIGH_HIJACK, EffectTrigger.AFTER_ROUND,
                                 "Gain points from face cards", 9));
 
                 RARE_CARDS.add(card(103, "Trick Thief", EffectType.TRICK_THIEF, EffectTrigger.ON_ROUND,
@@ -88,7 +87,7 @@ public class ShopCardPool {
                 LEGENDARY_CARDS.add(card(301, "Trump Tyrant", EffectType.TRUMP_TYRANT, EffectTrigger.ON_ROUND,
                                 "Force win if you follow/not follow suit correctly", 25));
 
-                LEGENDARY_CARDS.add(card(302, "Dealer Doom", EffectType.DEALER_DOOM, EffectTrigger.BEFORE_STAGE,
+                LEGENDARY_CARDS.add(card(302, "Dealer Doom", EffectType.DEALER_DOOM, EffectTrigger.ON_ROUND,
                                 "Significantly weaken dealer ranks", 30));
 
                 LEGENDARY_CARDS.add(card(303, "Infinite Tricks", EffectType.INFINITE_TRICKS, EffectTrigger.ON_ROUND,
