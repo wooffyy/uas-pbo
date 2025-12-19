@@ -157,6 +157,7 @@ public class BiddingPanel extends JPanel {
         GameManager.getInstance().getPhase2Game().selectBiddingItem(card);
         // Base bid suggestion (start at card price or 0?)
         // User image shows empty line or some value. Let's start at card price.
+        // Start bid at card price as requested
         currentPlayerBid = card.getPrice();
         currentState = State.BIDDING_WAR;
         renderArena();
@@ -196,6 +197,12 @@ public class BiddingPanel extends JPanel {
 
         JLabel cardImg = new JLabel(CardImageLoader.loadCardResized(card.getName(), 180, 280));
         cardWrapper.add(cardImg, BorderLayout.CENTER);
+
+        // Add Price Label below card for clarity
+        JLabel priceLabel = new JLabel("Price: $" + card.getPrice(), SwingConstants.CENTER);
+        priceLabel.setFont(new Font("Monospaced", Font.BOLD, 14));
+        priceLabel.setForeground(Color.CYAN);
+        cardWrapper.add(priceLabel, BorderLayout.SOUTH);
 
         centerPanel.add(cardWrapper);
 
@@ -322,6 +329,19 @@ public class BiddingPanel extends JPanel {
 
         GameState gs = GameManager.getInstance().getGameState();
         Phase2Game p2 = GameManager.getInstance().getPhase2Game();
+        SpecialCard card = p2.getBiddingItem();
+
+        // Check if bid is less than minimum price
+        if (currentPlayerBid < card.getPrice()) {
+             JOptionPane.showMessageDialog(this,
+                    "Bid minimal harus setara dengan harga kartu: $" + card.getPrice(),
+                    "Bid Terlalu Rendah",
+                    JOptionPane.WARNING_MESSAGE);
+             // Reset to min price
+             currentPlayerBid = card.getPrice();
+             bidValueField.setText(String.valueOf(currentPlayerBid));
+             return;
+        }
 
         // Safe insufficient funds check - just show warning, don't skip
         if (gs.getMoney() < currentPlayerBid) {

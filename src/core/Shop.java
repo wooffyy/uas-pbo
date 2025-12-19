@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-
 import model.card.Rarity;
 import model.card.SpecialCard;
 
@@ -74,7 +73,7 @@ public class Shop {
         SpecialCard base = pool.get(random.nextInt(pool.size()));
         SpecialCard copy = new SpecialCard(base);
         copy.setRarity(rarity); // Ensure applied rarity matches
-        copy.setPrice(20); // Base price fixed at 20
+        // copy.setPrice(20); // REMOVED: Respect original card price
         return copy;
     }
 
