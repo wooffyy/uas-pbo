@@ -2,14 +2,13 @@ package ui;
 
 import core.GameManager;
 import core.shop.ShopCardPool;
+import java.awt.*;
+import java.util.List;
+import javax.swing.*;
 import model.card.SpecialCard;
 import model.state.GameState;
 import model.state.PlayerInventory;
 import ui.component.SpecialCardAbilitiesPanel;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 
 public class Phase2ShopPanel extends JPanel {
 
@@ -253,6 +252,19 @@ public class Phase2ShopPanel extends JPanel {
         // Resize to 9:16 aspect ratio (approx 135x240)
         JLabel image = new JLabel(CardImageLoader.loadCardResized(card.getName(), 135, 240));
         image.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        // Add click listener for description popup
+        image.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        image.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                System.out.println("Shop card clicked: " + card.getName());
+                JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(image), 
+                    card.getDescription(), 
+                    card.getName(), 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
 
         // Price display inside/beside image
         JLabel price = new JLabel("$" + card.getPrice(), SwingConstants.CENTER);

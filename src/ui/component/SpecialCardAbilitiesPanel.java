@@ -1,13 +1,11 @@
 package ui.component;
 
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-
 import model.card.SpecialCard;
 import model.state.GameState;
 import ui.CardImageLoader;
-
-import java.awt.*;
 
 public class SpecialCardAbilitiesPanel extends JPanel {
 
@@ -58,9 +56,23 @@ public class SpecialCardAbilitiesPanel extends JPanel {
                 ImageIcon icon = CardImageLoader.loadCardImage(card);
                 Image image = icon.getImage().getScaledInstance(80, 120, Image.SCALE_SMOOTH);
                 slot.setIcon(new ImageIcon(image));
+                // Add click listener for popup description
+                slot.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                slot.addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                        System.out.println("Slot clicked: " + card.getName()); // DEBUG
+                        JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(slot), 
+                            card.getDescription(), 
+                            card.getName(), 
+                            JOptionPane.INFORMATION_MESSAGE);
+                    }
+                });
             } else {
                 // Empty slot styling
                 slot.setIcon(null);
+                slot.setCursor(Cursor.getDefaultCursor());
+                // Remove any existing listeners if slots are reused/pooled, but we recreate them here so it's fine.
             }
             add(slot);
         }

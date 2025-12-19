@@ -37,61 +37,61 @@ public class ShopCardPool {
         static {
                 // ===== COMMON =====
                 COMMON_CARDS.add(card(1, "Rank Riser", EffectType.RANK_RISER, EffectTrigger.ON_ROUND,
-                                "Boost rank when losing a trick", 6));
+                                "+1 rank played card when the card is lower than dealer (once per 3 trick)", 6));
 
                 COMMON_CARDS.add(card(2, "Heart Harvester", EffectType.HEART_HARVESTER, EffectTrigger.AFTER_ROUND,
-                                "Reduce debt for each Heart captured", 4));
+                                "When Hearts captured, -2 debt", 4));
 
                 COMMON_CARDS.add(card(3, "Spade Sneak", EffectType.SPADE_SNEAK, EffectTrigger.ON_ROUND,
-                                "Ignore suit rule with Spades", 6));
+                                "When Spades played but the rank is lower than dealer, ignore follow suit (once per Boss)", 6));
 
                 COMMON_CARDS.add(card(4, "Club Crusher", EffectType.CLUB_CRUSHER, EffectTrigger.AFTER_ROUND,
-                                "Gain extra points from Clubs", 4));
+                                "When Club captured, +2 money", 4));
 
                 COMMON_CARDS.add(card(5, "Diamond Dealer", EffectType.DIAMOND_DEALER, EffectTrigger.AFTER_ROUND,
-                                "Diamond captured: -0,1 interest each", 5));
+                                "When Diamond captured, -0,1 interest", 5));
 
                 COMMON_CARDS.add(card(6, "Low Lifter", EffectType.LOW_LIFTER, EffectTrigger.ON_ROUND,
-                                "Boost rank when losing a trick", 6));
+                                "+2 rank for 2, 3, 4, and 5 card", 6));
 
                 COMMON_CARDS.add(card(7, "Ten Taker", EffectType.TEN_TAKER, EffectTrigger.AFTER_ROUND,
-                                "Bonus points when 10 is involved", 6));
+                                "When 10 captured, +30% bonus from the total money earned from the trick.", 6));
 
                 // ===== RARE =====
                 RARE_CARDS.add(card(101, "Suit Swapper", EffectType.SUIT_SWAPPER, EffectTrigger.ON_ROUND,
-                                "Force suit matching under conditions", 12));
+                                "Swap the played card's suit into the dealer suit (Ignore Suit)", 12));
 
                 RARE_CARDS.add(card(102, "High Hijack", EffectType.HIGH_HIJACK, EffectTrigger.AFTER_ROUND,
-                                "Gain points from face cards", 9));
+                                "When K, Q, or J captured, +10 money", 9));
 
                 RARE_CARDS.add(card(103, "Trick Thief", EffectType.TRICK_THIEF, EffectTrigger.ON_ROUND,
-                                "Chance to retrigger a won trick", 11));
+                                "1 in 5 chance to x2 total money earned from the trick", 11));
 
                 RARE_CARDS.add(card(104, "Void Viper", EffectType.VOID_VIPER, EffectTrigger.ON_ROUND,
-                                "Ignore suit rule freely", 12));
+                                "Ignore suit for once per Boss", 12));
 
                 RARE_CARDS.add(card(105, "Point Parasite", EffectType.POINT_PARASITE, EffectTrigger.AFTER_STAGE,
-                                "Multiply score when already high", 10));
+                                "if the total money earned after stage is more than 50, +30% bonus", 10));
 
                 // ===== SUPER RARE =====
                 SUPER_RARE_CARDS.add(card(201, "Lead Leech", EffectType.LEAD_LEECH, EffectTrigger.BEFORE_STAGE,
-                                "Player always leads the trick", 18));
+                                "Make player always lead", 18));
 
                 SUPER_RARE_CARDS.add(card(202, "Rank Rampage", EffectType.RANK_RAMPAGE, EffectTrigger.ON_ROUND,
-                                "Massive rank boost when losing", 18));
+                                "+3 rank played card when the card is lower than dealer (once per 3 trick)", 18));
 
                 SUPER_RARE_CARDS.add(card(203, "Cascade Capture", EffectType.CASCADE_CAPTURE, EffectTrigger.AFTER_ROUND,
-                                "Bonus points on win streak", 18));
+                                "Win 3+ times in a row, +20 money for each subsequent trick", 18));
 
                 // ===== LEGENDARY =====
                 LEGENDARY_CARDS.add(card(301, "Trump Tyrant", EffectType.TRUMP_TYRANT, EffectTrigger.ON_ROUND,
-                                "Force win if you follow/not follow suit correctly", 25));
+                                "Player card always highest and ignore follow suit for once per 3 trick", 25));
 
                 LEGENDARY_CARDS.add(card(302, "Dealer Doom", EffectType.DEALER_DOOM, EffectTrigger.ON_ROUND,
-                                "Significantly weaken dealer ranks", 30));
+                                "Dealer card always -2 rank", 30));
 
                 LEGENDARY_CARDS.add(card(303, "Infinite Tricks", EffectType.INFINITE_TRICKS, EffectTrigger.ON_ROUND,
-                                "Win again and again...", 25));
+                                "Always x2 total money earned from the trick", 25));
         }
 
         /*

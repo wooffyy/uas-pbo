@@ -11,7 +11,7 @@ import model.card.Suit;
 public class EconomistBoss extends BossDealer {
 
     public EconomistBoss(Random rng) {
-        super("Economist Boss", rng);
+        super("Ricky Chindo", rng);
     }
 
     @Override

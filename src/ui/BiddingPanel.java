@@ -198,6 +198,19 @@ public class BiddingPanel extends JPanel {
         JLabel cardImg = new JLabel(CardImageLoader.loadCardResized(card.getName(), 180, 280));
         cardWrapper.add(cardImg, BorderLayout.CENTER);
 
+        // Add click listener for description popup
+        cardImg.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cardImg.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                System.out.println("Bidding card clicked: " + card.getName()); // DEBUG
+                JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(cardImg), 
+                    card.getDescription(), 
+                    card.getName(), 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
         // Add Price Label below card for clarity
         JLabel priceLabel = new JLabel("Price: $" + card.getPrice(), SwingConstants.CENTER);
         priceLabel.setFont(new Font("Monospaced", Font.BOLD, 14));

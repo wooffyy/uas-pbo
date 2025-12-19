@@ -451,7 +451,7 @@ public class GameManager {
         Random rng = new Random(seed + stage);
 
         return switch (stage) {
-            case 1 -> new Dealer("INTRO BOSS", rng) {
+            case 1 -> new Dealer("Dit the Electric", rng) {
                 @Override
                 public int bid(SpecialCard biddingItem, int round, int playerBid) {
                     // New logic: re-bid 2-10 more than player, max 20

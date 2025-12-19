@@ -12,7 +12,7 @@ import model.card.Suit;
 public class FinalBossDealer extends BossDealer {
 
     public FinalBossDealer(Random rng) {
-        super("Final Boss", rng);
+        super("Future Alit", rng);
     }
 
     @Override
