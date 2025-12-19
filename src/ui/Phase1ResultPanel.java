@@ -85,7 +85,22 @@ public class Phase1ResultPanel extends JPanel {
     }
 
     private void addListeners() {
-        continueButton.addActionListener(e -> gameManager.continueToPhase2());
+        continueButton.addActionListener(e -> handleContinue());
+    }
+
+    private void handleContinue() {
+        GameState state = gameManager.getGameState();
+        // If dead and NOT round 4, go to menu (Game Over)
+        // If round 4, continue to ending sequence regardless of death
+        if (state.isDead()) {
+            if (state.getRound() == 4) {
+                gameManager.triggerEnding(false); // Explicitly trigger LOSE ending
+            } else {
+                parentFrame.switchView(UIWindow.MENU_VIEW);
+            }
+        } else {
+            gameManager.continueToPhase2();
+        }
     }
 
     public void updateResults() {
@@ -101,14 +116,21 @@ public class Phase1ResultPanel extends JPanel {
         totalMoneyLabel.setText("Total Player Money: $" + state.getMoney());
         healthStatusLabel.setText("Health: " + "♥".repeat(Math.max(0, state.getPlayerHealth())));
         healthStatusLabel.setForeground(state.getPlayerHealth() > 1 ? Color.GREEN : Color.RED);
-        
+
         debtInterestLabel.setText("Debt from Interest: $" + df.format(state.getLastInterestAdded()));
         debtStatusLabel.setText("New Total Debt: $" + df.format(state.getDebt()));
-        
+
+        // Button Logic
         if (state.isDead()) {
-            continueButton.setText("GAME OVER - BACK TO MENU");
-            continueButton.setBackground(Color.RED.darker());
-            continueButton.addActionListener(e -> parentFrame.switchView(UIWindow.MENU_VIEW));
+            if (state.getRound() == 4) {
+                // Round 4 Death -> Continue to Ending Story
+                continueButton.setText("CONTINUE (ENDING)");
+                continueButton.setBackground(new Color(50, 150, 50));
+            } else {
+                // Normal Death
+                continueButton.setText("GAME OVER - BACK TO MENU");
+                continueButton.setBackground(Color.RED.darker());
+            }
         } else {
             continueButton.setText("CONTINUE");
             continueButton.setBackground(new Color(50, 150, 50));

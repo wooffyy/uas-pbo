@@ -2,6 +2,7 @@ package ui;
 
 import core.GameManager;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import javax.swing.*;
 
 public class UIWindow extends JFrame {
@@ -43,6 +44,29 @@ public class UIWindow extends JFrame {
         add(mainPanel);
 
         setLocationRelativeTo(null);
+
+        // Cheat Listener: "alit"
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+            private StringBuilder buffer = new StringBuilder();
+
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.getID() == KeyEvent.KEY_PRESSED) {
+                    buffer.append(Character.toLowerCase(e.getKeyChar()));
+                    if (buffer.length() > 4) {
+                        buffer.deleteCharAt(0);
+                    }
+
+                    if (buffer.toString().equals("alit")) {
+                        if (gameManager != null) {
+                            gameManager.activateCheatFutureAlit();
+                        }
+                        buffer.setLength(0); // Reset
+                    }
+                }
+                return false; // Let event propagate
+            }
+        });
     }
 
     public void initComponents(GameManager gameManager) {

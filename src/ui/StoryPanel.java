@@ -276,7 +276,7 @@ public class StoryPanel extends JPanel {
 
     public static final String[] ENDING_WIN_BUT_LOSE_TEXT = {
             // SCREEN 31 (ENDING 2: MENANG, NAMUN TETAP KALAH)
-            "Jika pemain memenangkan pertarungan, kartu terakhir jatuh dengan sunyi. Dominance runtuh. Sistem kehilangan pengendalinya.\n\n"
+            "kartu terakhir jatuh dengan sunyi. Dominance runtuh. Sistem kehilangan pengendalinya.\n\n"
                     +
                     "Namun perhitungan akhir tetap berjalan.\n\n" +
                     "Total poin tidak cukup untuk menutup hutang sepenuhnya. Bunga yang terakumulasi melampaui kemenangan terakhir. Secara teknis, pemain menang. Secara sistem, ia tetap gagal.\n\n"

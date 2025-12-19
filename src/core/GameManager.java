@@ -305,10 +305,9 @@ public class GameManager {
         } else {
             gameState.setPhase1Won(false);
             gameState.decreaseLife();
-            if (gameState.isDead()) {
-                gameOver();
-                return;
-            }
+            // Removed early return: logic moved to Phase1ResultPanel to allow Showing
+            // results
+            // and handling Round 4 Ending Sequence even if dead.
         }
 
         // Apply AFTER_STAGE effects independently of Win/Loss (e.g. Point Parasite)
@@ -333,12 +332,16 @@ public class GameManager {
         ui.getPhase1ResultPanel().updateResults();
     }
 
+    public void triggerEnding(boolean win) {
+        ui.startEndingSequence(win);
+    }
+
     public void continueToPhase2() {
         // Intercept for Final Boss Ending (Round 4)
         if (gameState.getRound() == 4) {
-            // Trigger Ending Sequence
-            // If surviving -> Win ("Win but Lose"). If dead -> Lose.
-            ui.startEndingSequence(!gameState.isDead());
+            // If we are here, it means player is alive (Phase1ResultPanel handles dead case
+            // separately)
+            triggerEnding(true);
             return;
         }
 
@@ -536,5 +539,13 @@ public class GameManager {
 
     public Phase2Game getPhase2Game() {
         return phase2;
+    }
+
+    // CHEAT
+    public void activateCheatFutureAlit() {
+        System.out.println("CHEAT ACTIVATED: Jumping to Future Alit!");
+        ui.showNotification("CHEAT: Skipping to Final Boss...");
+        gameState.setRound(4);
+        ui.startStage4StorySequence();
     }
 }
