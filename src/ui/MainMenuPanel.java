@@ -5,7 +5,6 @@ import core.GameManager;
 import javax.swing.*;
 import java.awt.*;
 
-
 // Panel Menu awal
 public class MainMenuPanel extends JPanel {
 
@@ -22,11 +21,10 @@ public class MainMenuPanel extends JPanel {
     public MainMenuPanel(UIWindow parentFrame, GameManager gameManager) {
         setLayout(new BorderLayout());
 
-
-        // Memuat gambar dari direktori yang sama dengan class MainMenuPanel (package ui)
+        // Memuat gambar dari direktori yang sama dengan class MainMenuPanel (package
+        // ui)
         backgroundImage = Toolkit.getDefaultToolkit().getImage(getClass().getResource("component/bgUI2.png"));
         super.setBackground(Color.BLACK);
-
 
         // 2. Setup Panel Tengah
         centerPanel = new JPanel(new GridBagLayout());
@@ -52,8 +50,7 @@ public class MainMenuPanel extends JPanel {
         startButton.setFont(new Font("Monospaced", Font.BOLD, 20));
         startButton.setBorder(BorderFactory.createLineBorder(TITLE_COLOR, 2));
 
-        startButton.addActionListener(e -> gameManager.startRun());
-
+        startButton.addActionListener(e -> parentFrame.startStorySequence());
 
         // Tombol Collection
         JButton collectionButton = new JButton("SPECIAL CARD COLLECTION");
@@ -62,10 +59,10 @@ public class MainMenuPanel extends JPanel {
         collectionButton.setForeground(TITLE_COLOR);
         collectionButton.setFont(new Font("Monospaced", Font.PLAIN, 18));
         collectionButton.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
-        collectionButton.addActionListener(e -> parentFrame.switchView(UIWindow.CARD_COLLECTION_VIEW)); // Hubungkan ke view baru
+        collectionButton.addActionListener(e -> parentFrame.switchView(UIWindow.CARD_COLLECTION_VIEW)); // Hubungkan ke
+                                                                                                        // view baru
 
         // Menambahkan fungsionalitas tombol Collection
-
 
         // Penempatan menggunakan GridBagConstraints
         gbc.gridx = 0;

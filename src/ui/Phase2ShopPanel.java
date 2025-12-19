@@ -24,7 +24,7 @@ public class Phase2ShopPanel extends JPanel {
     // ===== SHOP STATE =====
     // Use an array to keep fixed slots. Null means sold/empty.
     private SpecialCard[] shopSlots = new SpecialCard[6];
-    private boolean rerollUsed = false;
+    private int rerollCost = 5;
 
     // ===== UI REFS =====
     private JPanel shopGrid;
@@ -47,8 +47,8 @@ public class Phase2ShopPanel extends JPanel {
         add(createShopArea(), BorderLayout.CENTER);
 
         // ===== INIT SHOP =====
-        rollShop();
-        renderShop();
+        // rollShop(); // resetShop calls rollShop
+        resetShop();
     }
 
     private void rollShop() {
@@ -62,8 +62,9 @@ public class Phase2ShopPanel extends JPanel {
     }
 
     public void resetShop() {
+        rerollCost = 5;
         rollShop();
-        renderShop();
+        refresh(); // Updates render and button text
     }
 
     public void refresh() {
@@ -89,6 +90,9 @@ public class Phase2ShopPanel extends JPanel {
         }
         if (abilitiesPanel != null) {
             abilitiesPanel.refresh(GameManager.getInstance().getGameState());
+        }
+        if (rerollBtn != null) {
+            rerollBtn.setText("REROLL ($" + rerollCost + ")");
         }
         renderShop();
     }
@@ -345,14 +349,27 @@ public class Phase2ShopPanel extends JPanel {
         refresh(); // Refresh labels and abilities panel
     }
 
-    private void reroll() {
-        if (rerollUsed)
-            return;
+    // ...
 
+    private void reroll() {
+        GameState gs = GameManager.getInstance().getGameState();
+
+        // Check affordability
+        if (gs.getMoney() < rerollCost) {
+            // Cannot afford
+            return;
+        }
+
+        // Deduct money
+        gs.decreaseMoney(rerollCost);
+
+        // Increase cost
+        rerollCost += 5;
+
+        // Roll new items
         rollShop();
 
-        rerollUsed = true;
-        rerollBtn.setEnabled(false);
+        // Refresh UI
         refresh();
     }
 

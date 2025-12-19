@@ -7,6 +7,7 @@ import javax.swing.*;
 public class UIWindow extends JFrame {
 
     public static final String MENU_VIEW = "MenuView";
+    public static final String STORY_VIEW = "StoryView";
     public static final String PHASE1_VIEW = "Phase1View";
     public static final String PHASE1_RESULT_VIEW = "Phase1ResultView"; // New view
     public static final String PHASE2_VIEW = "Phase2View";
@@ -25,6 +26,8 @@ public class UIWindow extends JFrame {
     private BiddingPanel biddingPanel;
     private CardCollectionPanel collectionPanel; // Promoted to field
     private GameOverPanel gameOverPanel;
+    private StoryPanel currentStoryPanel;
+    private int currentStoryScreen = 1;
     // other panels can be stored as fields if needed
 
     public UIWindow() {
@@ -82,6 +85,7 @@ public class UIWindow extends JFrame {
         switch (viewName) {
             case MENU_VIEW:
             case CARD_COLLECTION_VIEW:
+            case STORY_VIEW: // Story screens use MainMenu BGM
                 sm.play("MainMenu");
                 break;
             case PHASE2_VIEW: // Shop
@@ -150,5 +154,110 @@ public class UIWindow extends JFrame {
 
     public void showNotification(String message) {
         JOptionPane.showMessageDialog(this, message, "Game Notification", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    /**
+     * Start the story sequence from screen 1
+     */
+    private String[] currentStorySequence;
+
+    /**
+     * Start the story sequence from screen 1 (Intro)
+     */
+    public void startStorySequence() {
+        currentStorySequence = StoryPanel.INTRO_STORY_TEXTS;
+        currentStoryScreen = 1;
+        showStoryScreen(currentStoryScreen);
+    }
+
+    /**
+     * Start the Stage 2 story sequence (Before Tactician)
+     */
+    public void startStage2StorySequence() {
+        currentStorySequence = StoryPanel.STAGE_2_STORY_TEXTS;
+        currentStoryScreen = 1;
+        showStoryScreen(currentStoryScreen);
+    }
+
+    /**
+     * Start the Stage 3 story sequence (Before Ricky Chindo)
+     */
+    public void startStage3StorySequence() {
+        currentStorySequence = StoryPanel.STAGE_3_STORY_TEXTS;
+        currentStoryScreen = 1;
+        showStoryScreen(currentStoryScreen);
+    }
+
+    /**
+     * Start the Stage 4 story sequence (Final Boss - Future Alit)
+     */
+    public void startStage4StorySequence() {
+        currentStorySequence = StoryPanel.STAGE_4_STORY_TEXTS;
+        currentStoryScreen = 1;
+        showStoryScreen(currentStoryScreen);
+    }
+
+    /**
+     * Start the Ending sequence
+     * 
+     * @param win true if player won the final battle (but still loses
+     *            systemically), false if died
+     */
+    public void startEndingSequence(boolean win) {
+        if (win) {
+            currentStorySequence = StoryPanel.ENDING_WIN_BUT_LOSE_TEXT;
+        } else {
+            currentStorySequence = StoryPanel.ENDING_LOSE_TEXT;
+        }
+        currentStoryScreen = 1;
+        showStoryScreen(currentStoryScreen);
+    }
+
+    private void showEpilogue() {
+        currentStorySequence = StoryPanel.EPILOGUE_TEXT;
+        currentStoryScreen = 1;
+        showStoryScreen(currentStoryScreen);
+    }
+
+    /**
+     * Show a specific story screen
+     */
+    private void showStoryScreen(int screenNumber) {
+        // Remove previous story panel if exists
+        if (currentStoryPanel != null) {
+            mainPanel.remove(currentStoryPanel);
+        }
+
+        // Check if we reached the end of the current sequence
+        if (screenNumber > currentStorySequence.length) {
+            // End of story
+            currentStoryPanel = null;
+
+            // Logic to determine where to go next
+            if (currentStorySequence == StoryPanel.INTRO_STORY_TEXTS) {
+                gameManager.startRun(); // Start Stage 1
+            } else if (currentStorySequence == StoryPanel.STAGE_2_STORY_TEXTS ||
+                    currentStorySequence == StoryPanel.STAGE_3_STORY_TEXTS ||
+                    currentStorySequence == StoryPanel.STAGE_4_STORY_TEXTS) {
+                gameManager.resumePhase2Finish(); // Resume phases
+            } else if (currentStorySequence == StoryPanel.ENDING_LOSE_TEXT ||
+                    currentStorySequence == StoryPanel.ENDING_WIN_BUT_LOSE_TEXT) {
+                // After Ending Screen 31, always show Epilogue
+                showEpilogue();
+            } else if (currentStorySequence == StoryPanel.EPILOGUE_TEXT) {
+                // After Epilogue, return to Main Menu
+                switchView(MENU_VIEW);
+            }
+            return;
+        }
+
+        // Show new screen
+        currentStoryPanel = new StoryPanel(currentStorySequence[screenNumber - 1], screenNumber, () -> {
+            currentStoryScreen++;
+            showStoryScreen(currentStoryScreen);
+        });
+
+        mainPanel.add(currentStoryPanel, STORY_VIEW);
+        switchView(STORY_VIEW);
     }
 }
