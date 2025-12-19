@@ -35,27 +35,20 @@ public class GameManager {
     }
 
     public void playCard(Card card) {
-        // Player can only play if:
-        // 1. No player card is currently on the table (playerPlayedCard is null)
-        // 2. It's the player's turn to lead (dealerLeadsTrick is false) OR the dealer
-        // has already played a card
         if (gameState.getPlayerPlayedCard() != null
                 || (gameState.isDealerLeadsTrick() && gameState.getDealerPlayedCard() == null)) {
             return;
         }
 
-        // --- BOSS SKILL: TACTICIAN (Forced Commitment) ---
-        // Trigger: Tricks 4 & 5 (Indices 3 & 4)
+        // Tactician Skill: Forced Commitment (Tricks 4 & 5)
         Dealer dealer = gameState.getCurrentDealer();
-        int currentTrickIndex = phase1.getTricksWon() + phase1.getTricksLost() + 1; // 1-based index
+        int currentTrickIndex = phase1.getTricksWon() + phase1.getTricksLost() + 1;
 
         if (dealer != null && dealer.isTactician()) {
-            // Logic: "After 3 tricks" -> Tricks 4 and 5.
             if (currentTrickIndex == 4 || currentTrickIndex == 5) {
                 List<Card> hand = gameState.getPlayerHand();
                 Card maxCard = null;
 
-                // If following suit, must play highest of that suit
                 if (gameState.isDealerLeadsTrick()) {
                     Suit leadSuit = gameState.getCurrentLeadCard().getSuit();
                     List<Card> follow = hand.stream().filter(c -> c.getSuit() == leadSuit).collect(Collectors.toList());
@@ -65,13 +58,11 @@ public class GameManager {
                     }
                 }
 
-                // If not following suit (or leading), must play highest overall
                 if (maxCard == null) {
                     maxCard = hand.stream().max(Comparator.comparingInt(Rules::scoreCard)).orElse(null);
                 }
 
-                // Logic: You must play a card that is EQUAL to the max value (allow ties)
-                // If the played card is WEAKER than the max card, block it.
+                // Block if played card is weaker than the max card (ties allowed)
                 if (maxCard != null && Rules.scoreCard(card) < Rules.scoreCard(maxCard)) {
                     ui.showNotification(
                             "TACTICIAN SKILL: Forced Commitment!\nYou must play your highest available card ("
@@ -132,9 +123,7 @@ public class GameManager {
             ui.showNotification("FINAL BOSS SKILL: Dominance!\nIf suits match, you need +3 rank difference to win!");
         }
 
-        // --- SPECIAL CARD LOGIC (ON_ROUND) ---
-        // 1. Pre-calculation Context (for modifying Rank, forcing Win/Loss etc.)
-        // Note: winStreak is current streak before this trick result
+        // Pre-calculation Context
         EffectContext ctxPre = new EffectContext(
                 gameState,
                 playerCard,
@@ -166,16 +155,11 @@ public class GameManager {
             gameState.setDealerLeadsTrick(true); // Dealer wins, dealer leads next trick
         }
 
-        // Logic Check: LEAD_LEECH
-        // If player has Lead Leech, they ALWAYS lead the next trick regardless of who
-        // won.
         if (gameState.getInventory().hasEffect(EffectType.LEAD_LEECH)) {
             gameState.setDealerLeadsTrick(false);
         }
 
-        // --- SPECIAL CARD LOGIC (Post-Win determination) ---
-        // Apply ON_ROUND again (for effects depending on win, e.g. Infinite Tricks)
-        // And AFTER_ROUND effects
+        // Apply ON_ROUND (post-win effects) and AFTER_ROUND
         EffectContext ctxPost = new EffectContext(
                 gameState,
                 playerCard,

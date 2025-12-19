@@ -4,23 +4,22 @@ import core.Rules;
 import java.util.Random;
 import model.card.Card;
 import model.card.NormalCard;
-import model.card.SpecialCard; // New import
-import model.card.Suit; // New import
+import model.card.SpecialCard;
+import model.card.Suit;
 
 /**
- * Base class untuk semua Boss Dealer.
- * Berisi hook skill Phase 1 (trick-taking).
+ * Base class for all Boss Dealers. Contains Phase 1 skill hooks.
  *
- * KONTRAK:
- * - Skill hanya aktif di Phase 1
- * - Default = tidak ada efek
+ * Contract:
+ * - Skills are only active in Phase 1
+ * - Default behavior = no effect
  */
 public abstract class BossDealer extends Dealer {
 
-    /** Trick ke berapa (dimulai dari 1) */
+    /** Current trick number (1-based) */
     protected int trickCount = 0;
 
-    /** Suit terakhir yang dimainkan Boss (untuk Final Boss) */
+    /** Last suit played by Boss (used for Final Boss logic) */
     protected Suit lastBossSuit = null;
 
     public BossDealer(String name, Random rng) {
@@ -30,56 +29,43 @@ public abstract class BossDealer extends Dealer {
     @Override
     public int bid(SpecialCard biddingItem, int round, int playerBid) {
         // Standard boss re-bid logic: bid 2-10 more than player, up to the boss's max
-        int rebidAmount = 2 + rng.nextInt(9); // 2-10
+        int rebidAmount = 2 + rng.nextInt(9);
         int dealerBid = playerBid + rebidAmount;
         return Math.min(dealerBid, getMaxBid());
     }
 
-    // Helper method to get effective value of dealer's card (considering its rankModifier)
     protected int getEffectiveDealerCardValue(Card dealerCard) {
-        // Create a temporary card to apply the dealer's own rankModifier for evaluation
         Card tempCard = new NormalCard(dealerCard.getSuit(), dealerCard.getRank());
-        tempCard.modifyRank(this.getRankModifier()); // Apply the persistent rank modifier from the dealer
+        tempCard.modifyRank(this.getRankModifier());
         return Rules.scoreCard(tempCard);
     }
 
-    /* ======================================================
-     * LIFECYCLE HOOK (DIPANGGIL Phase1Game)
-     * ====================================================== */
-
     /**
-     * Dipanggil SETIAP AWAL trick.
-     * Aman untuk trigger skill berbasis timing.
+     * Called at the start of every trick.
+     * Safe for timing-based skill triggers.
      */
     public void onTrickStart(int trickCount) {
         this.trickCount = trickCount;
     }
 
     /**
-     * Dipanggil saat Boss memainkan kartu.
-     * Digunakan oleh Final Boss (Dominance).
+     * Called when Boss plays a card.
      */
     public void onBossPlayCard(Card bossCard) {
         this.lastBossSuit = bossCard.getSuit();
     }
 
     /**
-     * Reset state boss saat Phase 1 dimulai.
-     * WAJIB dipanggil di awal Phase 1.
+     * Resets boss state at the start of Phase 1.
      */
     public void resetPhase1State() {
         this.trickCount = 0;
         this.lastBossSuit = null;
     }
 
-    /* ======================================================
-     * SKILL HOOK (OVERRIDE SESUAI STAGE)
-     * ====================================================== */
-
     /**
      * STAGE 2 — Forced Commitment
-     * Jika true, player dipaksa memainkan kartu tertinggi
-     * (jika follow suit tersedia).
+     * If true, player is forced to play their highest available card.
      */
     public boolean forceHighestCard() {
         return false;
@@ -87,7 +73,7 @@ public abstract class BossDealer extends Dealer {
 
     /**
      * STAGE 3 — Value Drain
-     * Modifikasi nilai kartu player (default: tidak berubah).
+     * Modifies player card value.
      */
     public int modifyPlayerCardValue(int originalValue) {
         return originalValue;
@@ -95,35 +81,23 @@ public abstract class BossDealer extends Dealer {
 
     /**
      * STAGE 4 — Dominance
-     * Override hasil trick jika perlu.
-     *
-     * @param playerCard kartu player
-     * @param bossCard   kartu boss
-     * @param defaultWinner hasil normal dari Rules
-     * @param playerValue nilai kartu player (setelah modifier)
-     * @param bossValue nilai kartu boss
-     * @return true jika player MENANG, false jika KALAH
+     * Overrides trick winner if necessary.
      */
     public boolean overrideTrickWinner(
             Card playerCard,
             Card bossCard,
             boolean defaultWinner,
             int playerValue,
-            int bossValue
-    ) {
+            int bossValue) {
         return defaultWinner;
     }
 
-    /* ======================================================
-     * METADATA (OPSIONAL UNTUK UI)
-     * ====================================================== */
-
-    /** Nama skill boss (untuk UI) */
+    /** Boss skill name for UI */
     public String getActiveSkillName() {
         return "";
     }
 
-    /** Apakah skill sedang aktif (untuk indikator UI) */
+    /** Whether the skill is currently active (for UI indicators) */
     public boolean isSkillActive() {
         return false;
     }

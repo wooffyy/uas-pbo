@@ -17,16 +17,12 @@ public class DatabaseManager {
 
     private static Connection connection;
 
-    // =========================================================
-    // 1. CONNECTION MANAGEMENT
-    // =========================================================
-
     public static void connect() throws SQLException {
         if (connection == null || connection.isClosed()) {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
             } catch (ClassNotFoundException e) {
-                // Try legacy driver if new one fails, or just throw helpful error
+                // Try legacy driver if new one fails
                 try {
                     Class.forName("com.mysql.jdbc.Driver");
                 } catch (ClassNotFoundException ex) {
@@ -50,7 +46,7 @@ public class DatabaseManager {
 
     private static Connection getConnection() throws SQLException {
         connect();
-        seedSpecialCardData(); // Ensure data exists
+        seedSpecialCardData();
         return connection;
     }
 
@@ -61,7 +57,6 @@ public class DatabaseManager {
         System.out.println("Seeding/Syncing special_card_data table from ShopCardPool...");
         List<SpecialCard> allCards = ShopCardPool.getAllCards();
 
-        // Use REPLACE INTO or ON DUPLICATE KEY UPDATE to ensure we sync new IDs/Updates
         String sql = """
                     INSERT INTO special_card_data (id, name, effect_type, effect_trigger, price, rarity, description)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -79,11 +74,9 @@ public class DatabaseManager {
                 ps.setInt(1, card.getId());
                 ps.setString(2, card.getName());
                 ps.setString(3, card.getEffectType().name());
-                // Handle potential null trigger if not set in pool (ShopCardPool seems to set
-                // it though)
                 ps.setString(4, card.getEffectTrigger() != null ? card.getEffectTrigger().name() : "ON_ROUND");
                 ps.setInt(5, card.getPrice());
-                ps.setString(6, card.getRarity().name().replace("_", " ")); // Fix: Convert SUPER_RARE -> SUPER RARE
+                ps.setString(6, card.getRarity().name().replace("_", " "));
                 ps.setString(7, card.getDescription());
                 ps.addBatch();
             }
@@ -94,17 +87,10 @@ public class DatabaseManager {
         }
     }
 
-    // =========================================================
-    // 2. COLLECTION MANAGEMENT (UNLOCK CARDS)
-    // =========================================================
-
     /**
-     * Unlocks a special card in the database (adds to collection).
-     * If the card is already unlocked, this method does nothing (or catches
-     * duplicate entry).
+     * Unlocks a special card in the database.
      */
     public static void unlockCard(int specialCardId) {
-        // Ensure data is seeded before trying to link
         try {
             seedSpecialCardData();
         } catch (Exception e) {
@@ -127,8 +113,7 @@ public class DatabaseManager {
     }
 
     /**
-     * Retrieves all unlocked special cards given their IDs from the database.
-     * Join unlocked_cards with special_card_data to get full card details.
+     * Retrieves all unlocked special cards.
      */
     public static List<SpecialCard> getUnlockedCards() {
         List<SpecialCard> unlockedCards = new ArrayList<>();
@@ -149,8 +134,7 @@ public class DatabaseManager {
                         EffectType.valueOf(rs.getString("effect_type")),
                         EffectTrigger.valueOf(rs.getString("effect_trigger")),
                         rs.getInt("price"),
-                        Rarity.valueOf(rs.getString("rarity").replace(" ", "_")), // Fix: Convert SUPER RARE ->
-                                                                                  // SUPER_RARE
+                        Rarity.valueOf(rs.getString("rarity").replace(" ", "_")),
                         rs.getString("description"));
                 unlockedCards.add(card);
             }
